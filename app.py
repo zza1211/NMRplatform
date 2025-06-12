@@ -102,7 +102,7 @@ class FileInfo(db.Model):
 
 # 初始化大模型客户端（请填写您的 api_key 等信息）
 client = OpenAI(
-    api_key="sk-49892c0f3c0849f79f0fb13a9e943ea3",
+    api_key="XXXXXXXXX",
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
 
