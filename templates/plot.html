@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="title">Metanaly</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .lang-switcher {
+      margin-left: auto;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" data-i18n="navbar.brand">Metanaly</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="/" data-i18n="navbar.upload">数据上传 <span class="sr-only">(current)</span></a>
+      </li>
+    </ul>
+    <div class="lang-switcher">
+      <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+      <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+  </div>
+</nav>
+
+<div style="text-align: center">
+  {% if plotly_html and not plotly_html1 %}
+  <div class="container-fluid">
+    <h4 class="text-center mt-4" data-i18n="sections.spectrum">谱图详情</h4>
+    {{ plotly_html|safe }}
+  </div>
+  {% endif %}
+</div>
+
+<div class="container mt-4">
+  <h4 class="text-center" data-i18n="sections.peak_removal">选择需要去除的峰区域</h4>
+  <form id="remove-peak-form">
+    <div id="peak-container">
+      <div class="form-row align-items-end peak-row">
+        <div class="col-md-3">
+          <label data-i18n="form.left_ppm">左侧 ppm</label>
+          <input type="number" step="any" class="form-control left-ppm" data-i18n="placeholder.left_ppm" placeholder="请输入左侧 ppm">
+        </div>
+        <div class="col-md-3">
+          <label data-i18n="form.right_ppm">右侧 ppm</label>
+          <input type="number" step="any" class="form-control right-ppm" data-i18n="placeholder.right_ppm" placeholder="请输入右侧 ppm">
+        </div>
+      </div>
+    </div>
+    <div class="mt-3">
+      <button type="button" id="add-peak-btn" class="btn btn-secondary" data-i18n="buttons.add_region">添加去除峰区域</button>
+    </div>
+    <div class="mt-3">
+      <button type="button" id="remove-peak-btn" data-file-id="{{ file_id }}" class="btn btn-primary" data-i18n="buttons.execute_removal">执行去除</button>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Language dictionary
+  const i18n = {
+    zh: {
+      title: "Metanaly",
+      navbar: {
+        brand: "Metanaly",
+        upload: "数据上传"
+      },
+      sections: {
+        spectrum: "谱图详情",
+        peak_removal: "选择需要去除的峰区域"
+      },
+      form: {
+        left_ppm: "左侧 ppm",
+        right_ppm: "右侧 ppm"
+      },
+      placeholder: {
+        left_ppm: "请输入左侧 ppm",
+        right_ppm: "请输入右侧 ppm"
+      },
+      buttons: {
+        add_region: "添加去除峰区域",
+        execute_removal: "执行去除"
+      },
+      messages: {
+        no_peaks: "请至少填写一组完整的 ppm 值！",
+        success: "峰区域去除成功！",
+        error: "峰区域去除失败，请重试。"
+      }
+    },
+    en: {
+      title: "Metanaly",
+      navbar: {
+        brand: "Metanaly",
+        upload: "Data Upload"
+      },
+      sections: {
+        spectrum: "Spectrum Details",
+        peak_removal: "Select Peak Regions to Remove"
+      },
+      form: {
+        left_ppm: "Left ppm",
+        right_ppm: "Right ppm"
+      },
+      placeholder: {
+        left_ppm: "Enter left ppm value",
+        right_ppm: "Enter right ppm value"
+      },
+      buttons: {
+        add_region: "Add Removal Region",
+        execute_removal: "Execute Removal"
+      },
+      messages: {
+        no_peaks: "Please enter at least one complete ppm range!",
+        success: "Peak regions removed successfully!",
+        error: "Failed to remove peak regions, please try again."
+      }
+    }
+  };
+
+  // Switch language function
+  function switchLanguage(lang) {
+    localStorage.setItem('preferredLang', lang);
+    document.documentElement.lang = lang;
+
+    // Update all elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const keys = el.getAttribute('data-i18n').split('.');
+      let value = i18n[lang];
+
+      for (const key of keys) {
+        value = value[key];
+        if (!value) break;
+      }
+
+      if (value) {
+        if (el.tagName === 'INPUT' && el.type !== 'button' && el.type !== 'submit') {
+          el.placeholder = value;
+        } else {
+          el.textContent = value;
+        }
+      }
+    });
+
+    // Update title separately
+    document.title = i18n[lang].title;
+  }
+
+  // Initialize language
+  const savedLang = localStorage.getItem('preferredLang') || 'zh';
+  switchLanguage(savedLang);
+
+  $(document).ready(function () {
+    // Click to add new peak removal row
+    $('#add-peak-btn').click(function () {
+      let newRow = $('.peak-row').first().clone();
+      newRow.find('input').val('');
+      $('#peak-container').append(newRow);
+
+      // Update placeholders for new inputs
+      newRow.find('.left-ppm').attr('placeholder', i18n[savedLang].placeholder.left_ppm);
+      newRow.find('.right-ppm').attr('placeholder', i18n[savedLang].placeholder.right_ppm);
+    });
+
+    // Execute peak removal
+    $('#remove-peak-btn').click(function () {
+      const fileId = this.getAttribute("data-file-id");
+      let peaks = [];
+
+      // Collect all peak ranges
+      $('.peak-row').each(function () {
+        const leftPPM = $(this).find('.left-ppm').val();
+        const rightPPM = $(this).find('.right-ppm').val();
+        if (leftPPM && rightPPM) {
+          peaks.push({ left_ppm: parseFloat(leftPPM), right_ppm: parseFloat(rightPPM) });
+        }
+      });
+
+      if (peaks.length === 0) {
+        alert(i18n[savedLang].messages.no_peaks);
+        return;
+      }
+
+      $.ajax({
+        type: 'POST',
+        url: '/remove_water_peak',
+        contentType: 'application/json',
+        data: JSON.stringify({ peaks: peaks, file_id: fileId }),
+        success: function (response) {
+          alert(i18n[savedLang].messages.success);
+          window.location.href = response.redirect_url || '/plot/' + fileId;
+        },
+        error: function () {
+          alert(i18n[savedLang].messages.error);
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>

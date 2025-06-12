@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">大模型问答结果</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        #reasoning, #finalAnswer {
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f8f8f8;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #finalAnswer {
+            white-space: pre-wrap;
+        }
+        .lang-switcher {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <span class="navbar-brand"></span>
+        <div class="lang-switcher">
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h1 data-i18n="heading">大模型问答结果 - 分析编号 {{ id }}</h1>
+
+    <h3 data-i18n="reasoning.title">模型推理过程</h3>
+    <div id="reasoning"></div>
+
+    <h3 data-i18n="answer.title">模型最终回答</h3>
+    <div id="finalAnswer"></div>
+
+    <div id="status" class="mt-3"></div>
+</div>
+
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "大模型问答结果",
+            heading: "大模型问答结果 - 分析编号",
+            reasoning: {
+                title: "模型推理过程"
+            },
+            answer: {
+                title: "模型最终回答"
+            }
+        },
+        en: {
+            title: "LLM Q&A Results",
+            heading: "LLM Q&A Results - Analysis ID",
+            reasoning: {
+                title: "Model Reasoning Process"
+            },
+            answer: {
+                title: "Model Final Answer"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                el.textContent = value;
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+
+        // Special handling for heading with dynamic ID
+        const heading = document.querySelector('h1');
+        if (heading) {
+            const id = "{{ id }}"; // This will be replaced by your template engine
+            heading.textContent = `${i18n[lang].heading} ${id}`;
+        }
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+
+    // Example content loading (replace with your actual data loading logic)
+    $(document).ready(function() {
+        // This would be replaced with your actual data loading logic
+        $('#reasoning').html("<p>Loading reasoning process...</p>");
+        $('#finalAnswer').html("<p>Loading final answer...</p>");
+        $('#status').html('<div class="alert alert-info">Status: Ready</div>');
+
+    });
+    // 建立 SSE 连接
+    var eventSource = new EventSource("/llm_stream/{{ id }}");
+    var reasoningDiv = document.getElementById("reasoning");
+    var finalAnswerDiv = document.getElementById("finalAnswer");
+    var statusDiv = document.getElementById("status");
+    var finalContent = "";  // 用于累积最终回答文本
+
+    // 接收推理过程事件
+    eventSource.addEventListener("reasoning", function(e) {
+        reasoningDiv.innerText += e.data;
+    });
+
+    // 接收最终回答事件
+    eventSource.addEventListener("final", function(e) {
+        // 如果收到结束标识，则显示“回答完成”
+        if (e.data.trim() === "[回答完成]") {
+            statusDiv.innerHTML = "<strong>回答完成</strong>";
+            eventSource.close();
+            return;
+        }
+        // 累加最终回答内容并显示
+        if (e.data.trim() !== "[模型开始回答]") {
+            finalContent += e.data;
+        }
+        finalAnswerDiv.innerText += e.data;
+    });
+
+    eventSource.onerror = function(e) {
+        console.error("EventSource 错误:", e);
+        statusDiv.innerHTML = "<strong>连接失败，请刷新重试。</strong>";
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 页面标题根据语言动态更新 -->
+    <title data-i18n="title">通路分析参数选择</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery 和 Bootstrap JS -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+    <style>
+        .lang-switcher { margin-left: auto; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-i18n="nav.back">返回</a>
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+</nav>
+<div class="container">
+    <h1 class="mt-4" data-i18n="heading">通路分析</h1>
+
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form id="analysisForm" method="post">
+        <div class="form-group">
+            <label for="species" data-i18n="form.species_label">选择物种:</label>
+            <select class="form-control" id="species" name="species" required>
+                {% for code, name in species_list.items() %}
+                <option value="{{ code }}">{{ name }} ({{ code }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="group1" data-i18n="form.group1_label">选择组别1:</label>
+            <select class="form-control" id="group1" name="group1" required>
+                {% for g in groups %}
+                <option value="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="group2" data-i18n="form.group2_label">选择组别2:</label>
+            <select class="form-control" id="group2" name="group2" required>
+                {% for g in groups %}
+                <option value="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" data-i18n="form.submit">开始分析</button>
+    </form>
+</div>
+
+<script>
+    const i18n = {
+        zh: {
+            title: "通路分析参数选择",
+            nav: { back: "返回" },
+            heading: "通路分析",
+            form: {
+                species_label: "选择物种:",
+                group1_label: "选择组别1:",
+                group2_label: "选择组别2:",
+                submit: "开始分析"
+            }
+        },
+        en: {
+            title: "Pathway Analysis - Select Parameters",
+            nav: { back: "Back" },
+            heading: "Pathway Analysis",
+            form: {
+                species_label: "Species:",
+                group1_label: "Group 1:",
+                group2_label: "Group 2:",
+                submit: "Analyze"
+            }
+        }
+    };
+
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+            keys.forEach(k => { if (value[k]) value = value[k]; });
+            if (value) el.textContent = value;
+        });
+        document.title = i18n[lang].title;
+    }
+
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">随机森林分析结果</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+    <style>
+        .lang-switcher {
+            margin-left: auto;
+        }
+        .result-card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-i18n="nav.back">返回</a>
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+</nav>
+<div class="container mt-4">
+    <h1 data-i18n="heading">随机森林分析结果</h1>
+    <p><strong data-i18n="metrics.oob_score">模型 OOB Score：</strong> <span class="stat-value">{{ oob_score|round(3) }}</span></p>
+
+    <!-- Navigation tabs -->
+    <ul class="nav nav-tabs" id="resultTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="vip-tab" data-toggle="tab" href="#vip" role="tab" aria-controls="vip" aria-selected="true" data-i18n="tabs.vip">VIP 图</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="dtree-tab" data-toggle="tab" href="#dtree" role="tab" aria-controls="dtree" aria-selected="false" data-i18n="tabs.dtree">决策树样例</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="error-tab" data-toggle="tab" href="#error" role="tab" aria-controls="error" aria-selected="false" data-i18n="tabs.error">误差变化图</a>
+        </li>
+    </ul>
+
+    <!-- Tab content -->
+    <div class="tab-content mt-3" id="resultTabContent">
+        <!-- VIP Plot -->
+        <div class="tab-pane fade show active" id="vip" role="tabpanel" aria-labelledby="vip-tab">
+            <div class="result-card">
+                <img src="data:image/png;base64,{{ vip_img }}" class="img-fluid" data-i18n="images.vip" alt="VIP 图">
+            </div>
+        </div>
+        <!-- Decision Tree Sample -->
+        <div class="tab-pane fade" id="dtree" role="tabpanel" aria-labelledby="dtree-tab">
+            <div class="result-card">
+                <img src="data:image/png;base64,{{ dtree_img }}" class="img-fluid" data-i18n="images.dtree" alt="决策树样例">
+            </div>
+        </div>
+        <!-- Error Plot -->
+        <div class="tab-pane fade" id="error" role="tabpanel" aria-labelledby="error-tab">
+            <div class="result-card">
+                <img src="data:image/png;base64,{{ error_plot_img }}" class="img-fluid" data-i18n="images.error" alt="误差变化图">
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Importance Table -->
+    <div class="mt-4">
+        <h4 data-i18n="sections.feature_importance">随机森林特征重要性计算结果</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead class="thead-light">
+                    <tr>
+                        <th data-i18n="table.rank">排名</th>
+                        <th data-i18n="table.feature">特征</th>
+                        <th data-i18n="table.importance">重要性得分</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rf_table %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ item.feature }}</td>
+                        <td>{{ "%.3f"|format(item.importance) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4 mb-4">
+        <button class="btn btn-primary" onclick="window.print()" data-i18n="buttons.print">打印结果</button>
+    </div>
+</div>
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "随机森林分析结果",
+            heading: "随机森林分析结果",
+            nav: {
+                back: "返回"
+            },
+            metrics: {
+                oob_score: "模型 OOB Score："
+            },
+            tabs: {
+                vip: "VIP 图",
+                dtree: "决策树样例",
+                error: "误差变化图"
+            },
+            sections: {
+                feature_importance: "随机森林特征重要性计算结果"
+            },
+            table: {
+                rank: "排名",
+                feature: "特征",
+                importance: "重要性得分"
+            },
+            buttons: {
+                print: "打印结果"
+            },
+            images: {
+                vip: "VIP图",
+                dtree: "决策树样例图",
+                error: "误差变化图"
+            }
+        },
+        en: {
+            title: "Random Forest Analysis Results",
+            heading: "Random Forest Analysis Results",
+            nav: {
+                back: "Back"
+            },
+            metrics: {
+                oob_score: "Model OOB Score:"
+            },
+            tabs: {
+                vip: "VIP Plot",
+                dtree: "Decision Tree Sample",
+                error: "Error Plot"
+            },
+            sections: {
+                feature_importance: "Random Forest Feature Importance"
+            },
+            table: {
+                rank: "Rank",
+                feature: "Feature",
+                importance: "Importance Score"
+            },
+            buttons: {
+                print: "Print Results"
+            },
+            images: {
+                vip: "VIP Plot",
+                dtree: "Decision Tree Sample",
+                error: "Error Plot"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                if (el.tagName === 'IMG') {
+                    el.alt = value;
+                } else {
+                    el.textContent = value;
+                }
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

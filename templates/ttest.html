@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">代谢物 t-test 分析结果</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+    <style>
+        .lang-switcher {
+            margin-left: auto;
+        }
+        .result-card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .diagnostic-plot {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-i18n="nav.back">返回</a>
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+</nav>
+<div class="container mt-4">
+    <h1 data-i18n="heading">代谢物 t-test 分析结果</h1>
+
+    <!-- Bootstrap Tabs -->
+    <ul class="nav nav-tabs" id="resultTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="volcano-tab" data-toggle="tab" href="#volcano" role="tab" aria-controls="volcano" aria-selected="true" data-i18n="tabs.volcano">火山图</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="boxplot-tab" data-toggle="tab" href="#boxplot" role="tab" aria-controls="boxplot" aria-selected="false" data-i18n="tabs.boxplot">箱线图</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3" id="resultTabContent">
+        <!-- Volcano Plot Tab -->
+        <div class="tab-pane fade show active" id="volcano" role="tabpanel" aria-labelledby="volcano-tab">
+            <div class="result-card">
+                <!-- Group Selection Form -->
+                <form class="form-inline" method="get" action="">
+                    <div class="form-group mr-2">
+                        <label for="group1" class="mr-2" data-i18n="form.group1">组1（组1为FC基准）:</label>
+                        <select name="group1" id="group1" class="form-control">
+                            {% for g in groups %}
+                            <option value="{{ g }}" {% if selected1 == g %}selected{% endif %}>{{ g }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mr-2">
+                        <label for="group2" class="mr-2" data-i18n="form.group2">组2:</label>
+                        <select name="group2" id="group2" class="form-control">
+                            {% for g in groups %}
+                            <option value="{{ g }}" {% if selected2 == g %}selected{% endif %}>{{ g }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-i18n="form.generate">绘制火山图</button>
+                </form>
+            </div>
+
+            {% if volcano_img %}
+            <div class="result-card">
+                <img src="data:image/png;base64,{{ volcano_img }}" class="img-fluid" data-i18n="images.volcano" alt="火山图">
+            </div>
+
+            <!-- Volcano Plot Results Table -->
+            <div class="result-card">
+                <h4 data-i18n="sections.volcano_results">火山图计算结果</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th data-i18n="table.metabolite">代谢物</th>
+                                <th data-i18n="table.fold_change">Fold Change</th>
+                                <th data-i18n="table.log2_fc">Log2(FC)</th>
+                                <th data-i18n="table.p_value">p-value</th>
+                                <th data-i18n="table.neg_log10_p">-Log10(p-value)</th>
+                                <th data-i18n="table.importance">重要性</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in volcano_table %}
+                            <tr>
+                                <td>{{ item.metabolite }}</td>
+                                <td>
+                                    {% if item.fold_change is not none %}
+                                        {{ "%.3f"|format(item.fold_change) }}
+                                    {% else %}
+                                        <span data-i18n="values.na">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.log2_fc is not none %}
+                                        {{ "%.3f"|format(item.log2_fc) }}
+                                    {% else %}
+                                        <span data-i18n="values.na">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.p_value is not none %}
+                                        {{ "%.3e"|format(item.p_value) }}
+                                    {% else %}
+                                        <span data-i18n="values.na">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.neg_log10_p is not none %}
+                                        {{ "%.3f"|format(item.neg_log10_p) }}
+                                    {% else %}
+                                        <span data-i18n="values.na">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.important %}
+                                        <span class="badge badge-danger" data-i18n="values.yes">是</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary" data-i18n="values.no">否</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="alert alert-warning" role="alert" data-i18n="messages.select_groups">
+                请在上方选择两个不同的组以生成火山图及计算结果表格。
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Boxplot Tab -->
+        <div class="tab-pane fade" id="boxplot" role="tabpanel" aria-labelledby="boxplot-tab">
+            <div class="result-card">
+                <img src="data:image/png;base64,{{ boxplot_img }}" class="img-fluid" data-i18n="images.boxplot" alt="箱线图">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "代谢物 t-test 分析结果",
+            heading: "代谢物 t-test 分析结果",
+            nav: {
+                back: "返回"
+            },
+            tabs: {
+                volcano: "火山图",
+                boxplot: "箱线图"
+            },
+            form: {
+                group1: "组1（组1为FC基准）:",
+                group2: "组2:",
+                generate: "绘制火山图"
+            },
+            sections: {
+                volcano_results: "火山图计算结果",
+                normality_tests: "正态性检验诊断图"
+            },
+            table: {
+                metabolite: "代谢物",
+                fold_change: "Fold Change",
+                log2_fc: "Log2(FC)",
+                p_value: "p-value",
+                neg_log10_p: "-Log10(p-value)",
+                importance: "重要性"
+            },
+            values: {
+                yes: "是",
+                no: "否",
+                na: "N/A"
+            },
+            labels: {
+                corrected: "(已校正)",
+                uncorrected: "(未校正)"
+            },
+            messages: {
+                select_groups: "请在上方选择两个不同的组以生成火山图及计算结果表格。"
+            },
+            images: {
+                volcano: "火山图",
+                boxplot: "箱线图",
+                diagnostic: "正态性检验诊断图"
+            }
+        },
+        en: {
+            title: "Metabolite t-test Analysis Results",
+            heading: "Metabolite t-test Analysis Results",
+            nav: {
+                back: "Back"
+            },
+            tabs: {
+                volcano: "Volcano Plot",
+                boxplot: "Box Plot"
+            },
+            form: {
+                group1: "Group 1 (FC reference):",
+                group2: "Group 2:",
+                generate: "Generate Volcano Plot"
+            },
+            sections: {
+                volcano_results: "Volcano Plot Results",
+                normality_tests: "Normality Test Diagnostics"
+            },
+            table: {
+                metabolite: "Metabolite",
+                fold_change: "Fold Change",
+                log2_fc: "Log2(FC)",
+                p_value: "p-value",
+                neg_log10_p: "-Log10(p-value)",
+                importance: "Significant"
+            },
+            values: {
+                yes: "Yes",
+                no: "No",
+                na: "N/A"
+            },
+            labels: {
+                corrected: "(corrected)",
+                uncorrected: "(uncorrected)"
+            },
+            messages: {
+                select_groups: "Please select two different groups above to generate volcano plot and results table."
+            },
+            images: {
+                volcano: "Volcano Plot",
+                boxplot: "Box Plot",
+                diagnostic: "Normality Test Diagnostic Plot"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                if (el.tagName === 'IMG') {
+                    el.alt = value;
+                } else {
+                    el.textContent = value;
+                }
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

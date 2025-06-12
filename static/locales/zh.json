@@ -1,0 +1,143 @@
+{
+  "title": "调整代谢物谱图",
+  "navbar": {
+    "brand": "Metanaly",
+    "upload": "数据上传",
+    "back": "返回"
+  },
+  "form": {
+    "card_title": "核磁文件导入",
+    "sample_type": "样本类型",
+    "research_content": "研究内容",
+    "research_object": "研究对象",
+    "research_purpose": "研究目的",
+    "file_type": "文件类型",
+    "upload_button": "上传文件",
+    "file_label_placeholder": "文件标签",
+    "purpose_placeholder": "请输入研究目的",
+    "peak_location": "未重叠谱峰位置",
+    "peak_placeholder": "输入未重叠谱峰位置"
+  },
+  "table": {
+    "qheaders": {
+      "代谢物": "代谢物",
+      "积分值": "积分值",
+      "相对含量": "相对含量"
+    },
+    "ali_headers": {
+      "代谢物": "代谢物",
+      "谱峰位置": "谱峰位置"
+    },
+    "headers": {
+      "object": "研究对象",
+      "context": "研究内容",
+      "sample_type": "样本类型",
+      "groups": "样本组数",
+      "status": "状态",
+      "actions": "操作",
+      "modify": "结果修改",
+      "metabolite_name": "代谢物名称",
+      "integral_left": "积分区域左侧值",
+      "integral_right": "积分区域右侧值",
+      "peak": "谱峰",
+      "metabolite": "代谢物",
+      "selection": "选择",
+      "method": "方法",
+      "group_info": "组别信息",
+      "select": "选择",
+      "f_stat": "F统计量",
+      "p_value": "p-value",
+      "effect_size": "效应量",
+      "group": "分组",
+      "shapiro_p": "Shapiro p-value",
+      "levene_p": "Levene p-value",
+      "corrected": "是否校正"
+    },
+    "metabolite_headers": {
+      "峰位置": "峰位置",
+      "指认结果": "指认结果",
+      "积分值": "积分值"
+    },
+    "id": "编号",
+    "filename": "文件名",
+    "object": "研究对象",
+    "context": "研究内容",
+    "sample_type": "样本类型",
+    "groups": "样本组数",
+    "date": "上传日期",
+    "actions": "操作",
+    "plot_detail": "谱图详情",
+    "metabolite_ident": "代谢物指认",
+    "data_analysis": "数据分析",
+    "delete": "删除",
+    "delete_confirm": "确定要删除吗？"
+  },
+  "pagination": {
+    "prev": "上一页",
+    "next": "下一页"
+  },
+  "options": {
+    "cell_tissue": "细胞/组织",
+    "serum": "血清",
+    "urine": "尿液",
+    "amniotic": "羊水"
+  },
+  "buttons": {
+    "left_shift": "左移",
+    "right_shift": "右移",
+    "increase_height": "增高",
+    "decrease_height": "降低",
+    "confirm": "确定",
+    "identify": "代谢物指认",
+    "select_peaks": "选择积分谱峰",
+    "align_fit": "对齐/拟合",
+    "integrate": "划分积分区域",
+    "quantify": "相对定量",
+    "validate": "验证",
+    "delete": "删除",
+    "submit": "提交修改",
+    "check_peak": "检查谱峰",
+    "save_selections": "保存选择",
+    "view_peak": "查看谱峰",
+    "align_peak": "对齐谱峰",
+    "fit_peak": "拟合谱峰",
+    "back": "返回",
+    "generate_chinese_instruction": "生成中文大模型指令",
+    "generate_english_instruction": "生成英文大模型指令",
+    "deepseek": "DeepSeek生成实验报告",
+    "qianwen": "通义千问生成实验报告"
+  },
+  "titles": {
+    "identification": "指认结果",
+    "metabolite_table": "代谢物指认结果表",
+    "quan_region": "积分区域",
+    "quan_table": "代谢物积分区域表",
+    "select_peaks": "选择代谢物谱峰",
+    "selected_metabolites": "已选择代谢物",
+    "integration_results": "积分结果表",
+    "analysis_results": "分析结果列表",
+    "anova_results": "代谢物单因素方差分析 (ANOVA) 结果",
+    "f_statistics": "F统计量和P值",
+    "effect_size": "效应量 (Eta Squared)",
+    "diagnostic_tests": "正态性与方差齐性检验结果",
+    "generated_title": "生成的大模型指令"
+  },
+  "modal": {
+    "peak_plot_title": "谱峰图",
+    "loading_alt": "加载图中..."
+  },
+  "tabs": {
+    "violin": "小提琴图",
+    "anova": "F统计量和P值",
+    "effect": "效应量",
+    "diagnostic": "正态性与方差齐性检验"
+  },
+  "labels": {
+    "na": "N/A",
+    "yes": "是",
+    "no": "否"
+  },
+  "images": {
+    "violin": "小提琴图"
+  }
+}

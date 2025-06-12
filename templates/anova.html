@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-key="titles.anova_results">代谢物单因素方差分析 (ANOVA) 结果</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-key="buttons.back">返回</a>
+    <div class="ml-auto">
+        <button id="lang-zh" class="btn btn-sm btn-outline-secondary">中文</button>
+        <button id="lang-en" class="btn btn-sm btn-outline-secondary">English</button>
+    </div>
+</nav>
+<div class="container mt-4">
+    <h1 data-key="titles.anova_results">代谢物单因素方差分析 (ANOVA) 结果</h1>
+
+    <!-- 使用 Bootstrap 导航标签 -->
+    <ul class="nav nav-tabs" id="resultTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="violin-tab" data-toggle="tab" href="#violin" role="tab"
+               aria-controls="violin" aria-selected="true" data-key="tabs.violin">小提琴图</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="anova-tab" data-toggle="tab" href="#anova" role="tab" aria-controls="anova"
+               aria-selected="false" data-key="tabs.anova">F统计量和P值</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="effect-tab" data-toggle="tab" href="#effect" role="tab" aria-controls="effect"
+               aria-selected="false" data-key="tabs.effect">效应量</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="diagnostic-tab" data-toggle="tab" href="#diagnostic" role="tab"
+               aria-controls="diagnostic" aria-selected="false" data-key="tabs.diagnostic">正态性与方差齐性检验</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3" id="resultTabContent">
+        <!-- 小提琴图标签页 -->
+        <div class="tab-pane fade show active" id="violin" role="tabpanel" aria-labelledby="violin-tab">
+            <img src="data:image/png;base64,{{ violin_img }}" class="img-fluid" data-key="images.violin" alt="小提琴图">
+        </div>
+
+        <!-- F统计量和P值表格标签页 -->
+        <div class="tab-pane fade" id="anova" role="tabpanel" aria-labelledby="anova-tab">
+            <div class="mt-4">
+                <h4 data-key="titles.f_statistics">F统计量和P值</h4>
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th data-key="table.headers.metabolite">代谢物</th>
+                        <th data-key="table.headers.f_stat">F统计量</th>
+                        <th data-key="table.headers.p_value">p-value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in anova_table %}
+                        <tr {% if item.p_value is not none and item.p_value < 0.05 %}class="table-danger"{% endif %}>
+                            <td>{{ item.metabolite }}</td>
+                            <td>
+                                {% if item.F_stat is not none %}
+                                    {{ "%.3f"|format(item.F_stat) }}
+                                {% else %}
+                                    <span data-key="labels.na">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.p_value is not none %}
+                                    {{ "%.3e"|format(item.p_value) }}
+                                {% else %}
+                                    <span data-key="labels.na">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 效应量表格标签页 -->
+        <div class="tab-pane fade" id="effect" role="tabpanel" aria-labelledby="effect-tab">
+            <div class="mt-4">
+                <h4 data-key="titles.effect_size">效应量 (Eta Squared)</h4>
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th data-key="table.headers.metabolite">代谢物</th>
+                        <th data-key="table.headers.effect_size">效应量</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in effect_size_table %}
+                        <tr>
+                            <td>{{ item.metabolite }}</td>
+                            <td>
+                                {% if item.effect_size is not none %}
+                                    {{ "%.3f"|format(item.effect_size) }}
+                                {% else %}
+                                    <span data-key="labels.na">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 正态性与方差齐性检验结果与诊断图标签页 -->
+        <div class="tab-pane fade" id="diagnostic" role="tabpanel" aria-labelledby="diagnostic-tab">
+            <div class="mt-4">
+                <h4 data-key="titles.diagnostic_tests">正态性与方差齐性检验结果</h4>
+                <table class="table table-bordered table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th data-key="table.headers.metabolite">代谢物</th>
+                        <th data-key="table.headers.group">分组</th>
+                        <th data-key="table.headers.shapiro_p">Shapiro p-value</th>
+                        <th data-key="table.headers.levene_p">Levene p-value</th>
+                        <th data-key="table.headers.corrected">是否校正</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in diagnostic_table %}
+                        <tr {% if item.shapiro_p < 0.05 or item.levene_p < 0.05 %}class="table-warning"{% endif %}>
+                            <td>{{ item.metabolite }}</td>
+                            <td>{{ item.group }}</td>
+                            <td>{{ "%.3e"|format(item.shapiro_p) if item.shapiro_p is not none else "N/A" }}</td>
+                            <td>{{ "%.3e"|format(item.levene_p) if item.levene_p is not none else "N/A" }}</td>
+                            <td data-key="labels.{{ 'yes' if item.corrected else 'no' }}">{{ "是" if item.corrected else "否" }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 国际化功能
+    function loadLocale(locale) {
+        $.getJSON(`/static/locales/${locale}.json`, function(data) {
+            $('[data-key]').each(function() {
+                const $elem = $(this);
+                const key = $elem.data('key');
+                const keys = key.split('.');
+                let value = data;
+                keys.forEach(k => value = value?.[k]);
+
+                if (value) {
+                    if ($elem.is('input[placeholder]')) {
+                        $elem.attr('placeholder', value);
+                    } else if ($elem.is('title')) {
+                        document.title = value;
+                    } else if ($elem.is('img')) {
+                        $elem.attr('alt', value);
+                    } else {
+                        $elem.text(value);
+                    }
+                }
+            });
+        });
+    }
+
+    // 语言切换事件
+    $('#lang-zh').click(() => {
+        localStorage.setItem('preferredLang', 'zh');
+        loadLocale('zh');
+    });
+
+    $('#lang-en').click(() => {
+        localStorage.setItem('preferredLang', 'en');
+        loadLocale('en');
+    });
+
+    // 初始化加载语言
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    loadLocale(savedLang);
+</script>
+</body>
+</html>

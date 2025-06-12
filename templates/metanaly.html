@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">数据分析</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .table-container {
+            max-height: 33vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .normalization-section, .method-section {
+            margin-top: 20px;
+        }
+
+        .normalization-section h5, .method-section h5 {
+            margin-top: 20px;
+            font-family: 'Arial', sans-serif;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #343a40;
+            border-bottom: 2px solid #6c757d;
+            padding-bottom: 5px;
+        }
+
+        .btn {
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+        }
+
+        .lang-switcher {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" data-i18n="navbar.brand">Metanaly</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/" data-i18n="navbar.upload">数据上传 <span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+        </div>
+    </div>
+</nav>
+<div class="container mt-4">
+    <!-- 如果数据已归一化，显示状态提示 -->
+    {% if normalize_status %}
+        <div class="alert alert-info">{{ normalize_status }}</div>
+    {% endif %}
+
+    <!-- Table Container -->
+    <div class="table-container">
+        <table class="table table-striped table-bordered">
+            <thead>
+            <tr>
+                {% for header in headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for cell in row %}
+                        <td>
+                            {% if loop.index0 >= 2 %}
+                                {{ "%.4f"|format(cell|float) }}
+                            {% else %}
+                                {{ cell }}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 归一化方法选择区域 -->
+    <div class="normalization-section">
+        <h5 data-i18n="sections.normalization">选择归一化方法</h5>
+        <a href="{{ url_for('normalize', id=id, method='tsp') }}" class="btn btn-success"
+           data-i18n="methods.tsp" title="TSP归一化">TSP归一化</a>
+        <form action="{{ url_for('normalize', id=id, method='tsp') }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="weight_file" accept=".csv" required>
+            <button type="submit" class="btn btn-primary" data-i18n="methods.tsp_upload">如需进行样本重量校正或细胞数校正，请上传对应的CSV文件（仅一列数据）</button>
+        </form>
+        <a href="{{ url_for('normalize', id=id, method='full') }}" class="btn btn-success"
+           data-i18n="methods.full" title="全谱归一化">全谱归一化（需提前去除水峰和外源性代谢物谱峰）</a>
+    </div>
+
+    <!-- 其他数据处理与降维功能 -->
+    <div class="method-section">
+        <h5 data-i18n="sections.processing">数据处理与降维</h5>
+        <a href="{{ url_for('pca_image', id=id) }}" class="btn btn-primary"
+           data-i18n="methods.pca" title="主成分分析，用于降维和数据可视化">PCA</a>
+        <a href="{{ url_for('plsda', id=id) }}" class="btn btn-primary"
+           data-i18n="methods.plsda" title="偏最小二乘判别分析，结合降维与分类">PLSDA</a>
+        <a href="{{ url_for('oplsda', id=id) }}" class="btn btn-primary"
+           data-i18n="methods.oplsda" title="正交偏最小二乘判别分析">OrthoPLSDA</a>
+
+        <h5 data-i18n="sections.difference">差异分析</h5>
+        <a href="{{ url_for('anova', id=id) }}" class="btn btn-secondary"
+           data-i18n="methods.anova" title="方差分析，用于多组均值的显著性检验">ANOVA</a>
+        <a href="{{ url_for('ttest', id=id) }}" class="btn btn-secondary"
+           data-i18n="methods.ttest" title="用于两组样本均值的显著性检验">T-test</a>
+
+        <h5 data-i18n="sections.machine_learning">机器学习</h5>
+        <a href="{{ url_for('rforest', id=id) }}" class="btn btn-info"
+           data-i18n="methods.rf" title="随机森林，用于分类或回归">RandomForest</a>
+        <a href="{{ url_for('kmeans', id=id) }}" class="btn btn-info"
+           data-i18n="methods.kmeans" title="无监督聚类方法，按距离划分为多个组">K-means聚类分析</a>
+        <a href="{{ url_for('logistic', id=id) }}" class="btn btn-info"
+           data-i18n="methods.logistic" title="可以分析代谢物对于分组的帮助">逻辑回归分析</a>
+
+        <h5 data-i18n="sections.pathway">通路分析</h5>
+        <a href="{{ url_for('pathway', id=id) }}" class="btn btn-warning"
+           data-i18n="methods.pathway">通路分析</a>
+        <h5 data-i18n="sections.report">实验报告生成</h5>
+        <a href="{{ url_for('analysis_results', id=id) }}" class="btn btn-primary"
+           data-i18n="methods.report">生成实验报告</a>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "数据分析",
+            navbar: {
+                brand: "Metanaly",
+                upload: "数据上传"
+            },
+            sections: {
+                normalization: "选择归一化方法",
+                processing: "数据处理与降维",
+                difference: "差异分析",
+                machine_learning: "机器学习",
+                pathway: "通路分析",
+                report: "实验报告生成"
+            },
+            methods: {
+                tsp: "TSP归一化",
+                tsp_upload: "如需进行样本重量校正或细胞数校正，请上传对应的CSV文件（仅一列数据）",
+                full: "全谱归一化（需提前去除水峰和外源性代谢物谱峰）",
+                pca: "PCA",
+                plsda: "PLSDA",
+                oplsda: "OrthoPLSDA",
+                anova: "ANOVA",
+                ttest: "T-test",
+                rf: "RandomForest",
+                kmeans: "K-means聚类分析",
+                logistic: "逻辑回归分析",
+                pathway: "通路分析",
+                report: "生成实验报告"
+            }
+        },
+        en: {
+            title: "Data Analysis",
+            navbar: {
+                brand: "Metanaly",
+                upload: "Data Upload"
+            },
+            sections: {
+                normalization: "Normalization Methods",
+                processing: "Data Processing & Dimensionality Reduction",
+                difference: "Differential Analysis",
+                machine_learning: "Machine Learning",
+                pathway: "Pathway Analysis",
+                report: "Report Generation"
+            },
+            methods: {
+                tsp: "TSP Normalization",
+                tsp_upload: "If sample weight correction or cell number correction is required, please upload the corresponding CSV file (with only one column of data).",
+                full: "Full Spectrum Normalization (remove water peaks and exogenous metabolites first)",
+                pca: "PCA",
+                plsda: "PLSDA",
+                oplsda: "OrthoPLSDA",
+                anova: "ANOVA",
+                ttest: "T-test",
+                rf: "RandomForest",
+                kmeans: "K-means Clustering",
+                logistic: "Logistic Regression",
+                pathway: "Pathway Analysis",
+                report: "Generate Report"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                if (el.tagName === 'INPUT' && el.type === 'submit') {
+                    el.value = value;
+                } else {
+                    el.textContent = value;
+                }
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

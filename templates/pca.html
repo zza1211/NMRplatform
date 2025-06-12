@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">PCA Analysis</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .tab-content > div {
+            display: none;
+        }
+        .tab-content > div.active {
+            display: block;
+        }
+        .lang-switcher {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-i18n="nav.back">返回</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link active" href="#overview" data-toggle="tab" data-i18n="tabs.overview">概览</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#scree-plot" data-toggle="tab" data-i18n="tabs.scree">碎石图</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#custom-2d" data-toggle="tab" data-i18n="tabs.custom">自定义2维图像</a>
+            </li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+        </div>
+    </div>
+</nav>
+
+<!-- 内容区 -->
+<div class="container mt-4">
+    <div class="tab-content">
+        <!-- PCA 总览 -->
+        <div id="overview" class="tab-pane active">
+            <h3 data-i18n="sections.overview">概览</h3>
+            <div>
+                {{ pca_html|safe }}
+            </div>
+        </div>
+
+        <!-- 碎石图 -->
+        <div id="scree-plot" class="tab-pane">
+            <h3 data-i18n="sections.scree">碎石图</h3>
+            <div>
+                {{ scree_html|safe }}
+            </div>
+        </div>
+
+        <!-- 自定义2维图像 -->
+        <div id="custom-2d" class="tab-pane">
+            <h3 data-i18n="sections.custom">自定义2维图像</h3>
+            <form id="custom-plot-form">
+                <div class="form-group">
+                    <label for="x-axis" data-i18n="form.x_axis">选择X轴主成分:</label>
+                    <select id="x-axis" class="form-control">
+                        <option value="0" data-i18n="components.pc1">PC1</option>
+                        <option value="1" data-i18n="components.pc2">PC2</option>
+                        <option value="2" data-i18n="components.pc3">PC3</option>
+                        <option value="3" data-i18n="components.pc4">PC4</option>
+                        <option value="4" data-i18n="components.pc5">PC5</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="y-axis" data-i18n="form.y_axis">选择Y轴主成分:</label>
+                    <select id="y-axis" class="form-control">
+                        <option value="0" data-i18n="components.pc1">PC1</option>
+                        <option value="1" data-i18n="components.pc2">PC2</option>
+                        <option value="2" data-i18n="components.pc3">PC3</option>
+                        <option value="3" data-i18n="components.pc4">PC4</option>
+                        <option value="4" data-i18n="components.pc5">PC5</option>
+                    </select>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="confidence-ellipse">
+                    <label class="form-check-label" for="confidence-ellipse" data-i18n="form.confidence">添加95%置信区间</label>
+                </div>
+                <div class="form-group">
+                    <label for="dpi" data-i18n="form.dpi">选择DPI:</label>
+                    <select id="dpi" class="form-control">
+                        <option value="300">300</option>
+                        <option value="400">400</option>
+                        <option value="500">500</option>
+                        <option value="600">600</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" id="generate-plot" data-i18n="buttons.generate">确认</button>
+            </form>
+            <div id="custom-plot" class="mt-4">
+                <img id="plot-image" src="" data-i18n="images.custom_plot" alt="Custom Plot" style="max-width: 100%; height: auto;"/>
+            </div>
+            <button id="download-plot" class="btn btn-success mt-2" style="display: none;" data-i18n="buttons.download">下载图像</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "PCA分析",
+            nav: { back: "返回" },
+            tabs: {
+                overview: "概览",
+                scree: "碎石图",
+                custom: "自定义2维图像"
+            },
+            sections: {
+                overview: "概览",
+                scree: "碎石图",
+                custom: "自定义2维图像"
+            },
+            form: {
+                x_axis: "选择X轴主成分:",
+                y_axis: "选择Y轴主成分:",
+                confidence: "添加95%置信区间",
+                dpi: "选择DPI:"
+            },
+            components: {
+                pc1: "PC1",
+                pc2: "PC2",
+                pc3: "PC3",
+                pc4: "PC4",
+                pc5: "PC5"
+            },
+            buttons: {
+                generate: "确认",
+                download: "下载图像"
+            },
+            images: {
+                custom_plot: "自定义PCA图像"
+            }
+        },
+        en: {
+            title: "PCA Analysis",
+            nav: { back: "Back" },
+            tabs: {
+                overview: "Overview",
+                scree: "Scree Plot",
+                custom: "Custom 2D Plot"
+            },
+            sections: {
+                overview: "Overview",
+                scree: "Scree Plot",
+                custom: "Custom 2D Plot"
+            },
+            form: {
+                x_axis: "Select X-axis component:",
+                y_axis: "Select Y-axis component:",
+                confidence: "Add 95% confidence ellipse",
+                dpi: "Select DPI:"
+            },
+            components: {
+                pc1: "PC1",
+                pc2: "PC2",
+                pc3: "PC3",
+                pc4: "PC4",
+                pc5: "PC5"
+            },
+            buttons: {
+                generate: "Generate",
+                download: "Download Image"
+            },
+            images: {
+                custom_plot: "Custom PCA Plot"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                if (el.tagName === 'IMG') {
+                    el.alt = value;
+                } else if (el.tagName === 'OPTION') {
+                    el.textContent = value;
+                } else {
+                    el.textContent = value;
+                }
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+
+    // Tab switching functionality
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.querySelector(link.getAttribute('href')).classList.add('active');
+        });
+    });
+
+    // Generate plot functionality
+    document.getElementById('generate-plot').addEventListener('click', () => {
+        const xAxis = document.getElementById('x-axis').value;
+        const yAxis = document.getElementById('y-axis').value;
+        const confidenceEllipse = document.getElementById('confidence-ellipse').checked;
+        const dpi = document.getElementById('dpi').value;
+        const id = {{ id }};
+
+        fetch('/generate_custom_plot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                xAxis: parseInt(xAxis),
+                yAxis: parseInt(yAxis),
+                confidenceEllipse,
+                dpi: parseInt(dpi),
+                id: id
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('plot-image').src = `data:image/png;base64,${data.image}`;
+            document.getElementById('download-plot').style.display = 'block';
+        });
+    });
+
+    // Download plot functionality
+    document.getElementById('download-plot').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.href = document.getElementById('plot-image').src;
+        link.download = 'custom_plot.png';
+        link.click();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-key="navbar.brand">Metanaly</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" data-key="navbar.brand">Metanaly</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/" data-key="navbar.upload">数据上传 <span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+        <div class="btn-group">
+            <button id="lang-zh" class="btn btn-sm btn-outline-secondary">中文</button>
+            <button id="lang-en" class="btn btn-sm btn-outline-secondary">English</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- 进度条 -->
+    <div class="progress my-3" id="progress-container" style="display: none;">
+        <div class="progress-bar" role="progressbar" style="width: 0%;" id="progress-bar" data-key="progress.percent">0%</div>
+    </div>
+
+    <!-- 修改后的上传表单 -->
+    <div class="card mb-4">
+        <div class="card-header" data-key="form.card_title">核磁文件导入</div>
+        <div class="card-body">
+            <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" onsubmit="startUpload(event)">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="type" data-key="form.sample_type">样本类型</label>
+                        <select name="type" id="type" class="form-control" required>
+                            <option value="细胞/组织" data-key="options.cell_tissue">细胞/组织</option>
+                            <option value="血清" data-key="options.serum">血清</option>
+                            <option value="尿液" data-key="options.urine">尿液</option>
+                            <option value="羊水" data-key="options.amniotic">羊水</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="context" data-key="form.research_content">研究内容</label>
+                        <input type="text" name="context" id="context" class="form-control" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="sample" data-key="form.research_object">研究对象</label>
+                        <input type="text" name="sample" id="sample" class="form-control" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="purpose" data-key="form.research_purpose">研究目的</label>
+                        <input type="text" name="purpose" id="purpose"
+                               class="form-control" data-key="form.purpose_placeholder" placeholder="请输入研究目的" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="fileType" data-key="form.file_type">文件类型</label>
+                        <select class="form-control" id="fileType" name="file_type" required onchange="updateFileUploadType()">
+                            <option value="zip" data-key="options.zip">ZIP</option>
+                            <option value="csv" data-key="options.csv">CSV</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="file-upload-container">
+                    <!-- 初始行由JavaScript生成 -->
+                </div>
+
+                <button type="submit" class="btn btn-primary" data-key="form.upload_button">上传文件</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 文件信息表格 -->
+    <table class="table table-striped table-bordered">
+        <thead class="thead-light">
+        <tr>
+            <th data-key="table.id">编号</th>
+            <th data-key="table.filename">文件名</th>
+            <th data-key="table.object">研究对象</th>
+            <th data-key="table.context">研究内容</th>
+            <th data-key="table.sample_type">样本类型</th>
+            <th data-key="table.groups">样本组数</th>
+            <th data-key="table.date">上传日期</th>
+            <th data-key="table.actions">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for file in paginate.items %}
+            <tr>
+                <td>{{ file.id }}</td>
+                <td>{{ file.file_name }}</td>
+                <td>{{ file.object }}</td>
+                <td>{{ file.context }}</td>
+                <td>{{ file.sample }}</td>
+                <td>{{ file.gp }}</td>
+                <td>{{ file.date }}</td>
+                <td>
+                    <a href="{{ url_for('plot', id=file.id) }}" class="btn btn-sm btn-info" data-key="table.plot_detail">谱图详情</a>
+                    <a href="{{ url_for('analysis', id=file.id) }}" class="btn btn-sm btn-primary" data-key="table.metabolite_ident">代谢物指认</a>
+                    <a href="{{ url_for('findata', id=file.id) }}" class="btn btn-sm btn-success" data-key="table.data_analysis">数据分析</a>
+                    <a href="{{ url_for('delete_file', id=file.id) }}" class="btn btn-sm btn-danger"
+                       onclick="return confirm(localStorage.getItem('lang') === 'en' ? 'Confirm to delete?' : '确定要删除吗？');"
+                       data-key="table.delete">删除</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 分页控制 -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if paginate.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" data-key="pagination.prev"
+                       href="{{ url_for('fileinfo', page=paginate.prev_num, perPage=paginate.per_page) }}">上一页</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" data-key="pagination.prev">上一页</a></li>
+            {% endif %}
+
+            {% for page_num in paginate.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == paginate.page %}
+                        <li class="page-item active"><a class="page-link">{{ page_num }}</a></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link"
+                                                 href="{{ url_for('fileinfo', page=page_num, perPage=paginate.per_page) }}">{{ page_num }}</a>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link">...</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if paginate.has_next %}
+                <li class="page-item">
+                    <a class="page-link" data-key="pagination.next"
+                       href="{{ url_for('fileinfo', page=paginate.next_num, perPage=paginate.per_page) }}">下一页</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" data-key="pagination.next">下一页</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 国际化功能
+    function loadLocale(locale) {
+        localStorage.setItem('lang', locale);
+        $.getJSON(`/static/locales/${locale}.json`, function(data) {
+            $('[data-key]').each(function() {
+                const key = $(this).data('key');
+                const keys = key.split('.');
+                let value = data;
+                keys.forEach(k => value = value?.[k]);
+                if (value) {
+                    if ($(this).is('input[placeholder], select')) {
+                        $(this).attr('placeholder', value);
+                    } else {
+                        $(this).text(value);
+                    }
+                }
+            });
+            // 更新按钮状态
+            $('[id^="lang-"]').removeClass('active');
+            $(`#lang-${locale}`).addClass('active');
+        });
+    }
+
+    $('#lang-zh').click(() => loadLocale('zh'));
+    $('#lang-en').click(() => loadLocale('en'));
+
+    // 初始化加载语言
+    const savedLang = localStorage.getItem('lang') || 'zh';
+    loadLocale(savedLang);
+
+    // 文件上传相关逻辑
+    let currentFileType = 'zip';
+
+    function updateFileUploadType() {
+        currentFileType = document.getElementById('fileType').value;
+        const container = document.getElementById('file-upload-container');
+        container.innerHTML = '';
+        addFileUploadRow(true);
+    }
+
+    function addFileUploadRow(isInitialRow = false) {
+        const container = document.getElementById('file-upload-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'form-row file-upload-row';
+
+        newRow.innerHTML = `
+            <div class="form-group col-md-5">
+                <input type="text" name="labels[]" class="form-control"
+                       data-key="form.file_label_placeholder" placeholder="文件标签" required>
+            </div>
+            <div class="form-group col-md-5">
+                <input type="file" name="${currentFileType}_files[]"
+                       class="form-control" accept=".${currentFileType}" required>
+            </div>
+            <div class="form-group col-md-2 d-flex align-items-end">
+                ${isInitialRow ?
+                    `<button type="button" class="btn btn-success" onclick="addFileUploadRow()">+</button>` :
+                    `<button type="button" class="btn btn-danger" onclick="removeFileUploadRow(this)">-</button>`}
+            </div>
+        `;
+        container.appendChild(newRow);
+    }
+
+    function removeFileUploadRow(button) {
+        button.closest('.file-upload-row').remove();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => addFileUploadRow(true));
+
+    // 文件上传进度功能
+    function startUpload(event) {
+        event.preventDefault();
+        $('#progress-container').show();
+        const formData = new FormData(event.target);
+
+        $.ajax({
+            url: "{{ url_for('upload') }}",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function() {
+                $('#progress-container').hide();
+                window.location.href = '{{ url_for('fileinfo') }}';
+            }
+        });
+
+        const progressInterval = setInterval(() => {
+            $.get('/progress', function(data) {
+                const progress = data.progress;
+                $('#progress-bar').css('width', progress + '%').text(progress + '%');
+                if (progress >= 100) clearInterval(progressInterval);
+            });
+        }, 500);
+    }
+</script>
+</body>
+</html>

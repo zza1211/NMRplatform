@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">逻辑回归分析结果</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+    <style>
+        .lang-switcher {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+        .result-card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+
+    <h1 data-i18n="heading">逻辑回归分析结果</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="result-card">
+                <h3 data-i18n="sections.roc">ROC 曲线</h3>
+                <img src="data:image/png;base64,{{ roc_img }}" data-i18n="images.roc" alt="ROC Curve" class="img-fluid">
+                <p data-i18n="metrics.auc">AUC 值: <strong class="stat-value">{{ auc }}</strong></p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="result-card">
+                <h3 data-i18n="sections.p_values">各变量 p 值</h3>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th data-i18n="table.variable">变量</th>
+                            <th data-i18n="table.p_value">p 值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for var, p in p_values.items() %}
+                        <tr>
+                            <td>{{ var }}</td>
+                            <td>{{ p }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('logistic', id=id) }}" class="btn btn-secondary" data-i18n="buttons.back">返回</a>
+        <button class="btn btn-primary ml-2" onclick="window.print()" data-i18n="buttons.print">打印结果</button>
+    </div>
+</div>
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "逻辑回归分析结果",
+            heading: "逻辑回归分析结果",
+            sections: {
+                roc: "ROC 曲线",
+                p_values: "各变量 p 值"
+            },
+            metrics: {
+                auc: "AUC 值:"
+            },
+            table: {
+                variable: "变量",
+                p_value: "p 值"
+            },
+            buttons: {
+                back: "返回",
+                print: "打印结果"
+            },
+            images: {
+                roc: "ROC曲线图"
+            }
+        },
+        en: {
+            title: "Logistic Regression Results",
+            heading: "Logistic Regression Analysis Results",
+            sections: {
+                roc: "ROC Curve",
+                p_values: "Variable p-values"
+            },
+            metrics: {
+                auc: "AUC Score:"
+            },
+            table: {
+                variable: "Variable",
+                p_value: "p-value"
+            },
+            buttons: {
+                back: "Back",
+                print: "Print Results"
+            },
+            images: {
+                roc: "ROC Curve Plot"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                if (el.tagName === 'IMG') {
+                    el.alt = value;
+                } else {
+                    el.textContent = value;
+                }
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+{
+  "title": "Metabolite Spectrum Adjustment",
+  "navbar": {
+    "brand": "Metanaly",
+    "upload": "Data Upload",
+    "back": "Back"
+  },
+  "form": {
+    "card_title": "NMR File Import",
+    "sample_type": "Sample Type",
+    "research_content": "Research Context",
+    "research_object": "Research Object",
+    "research_purpose": "Research Purpose",
+    "file_type": "File Type",
+    "upload_button": "Upload Files",
+    "file_label_placeholder": "File Label",
+    "purpose_placeholder": "Enter research purpose",
+    "peak_location": "Non-overlapping Peak Location",
+    "peak_placeholder": "Enter peak location"
+  },
+  "table": {
+    "qheaders": {
+      "代谢物": "Metabolite",
+      "积分值": "Integration Value",
+      "相对含量": "Relative Content"
+    },
+    "ali_headers": {
+      "代谢物": "Metabolite",
+      "谱峰位置": "Peak Position"
+    },
+    "headers": {
+      "object": "Research Object",
+      "context": "Research Context",
+      "sample_type": "Sample Type",
+      "groups": "Groups",
+      "status": "Status",
+      "actions": "Actions",
+      "modify": "Modification",
+      "metabolite_name": "Metabolite Name",
+      "integral_left": "Left Integral Value",
+      "integral_right": "Right Integral Value",
+      "peak": "Peak",
+      "metabolite": "Metabolite",
+      "selection": "Selection",
+      "method": "Method",
+      "group_info": "Group Info",
+      "select": "Select",
+      "f_stat": "F Statistic",
+      "p_value": "p-value",
+      "effect_size": "Effect Size",
+      "group": "Group",
+      "shapiro_p": "Shapiro p-value",
+      "levene_p": "Levene p-value",
+      "corrected": "Corrected"
+    },
+    "metabolite_headers": {
+      "峰位置": "Peak Position",
+      "指认结果": "Identification",
+      "积分值": "Integration Value"
+    },
+    "id": "ID",
+    "filename": "Filename",
+    "object": "Object",
+    "context": "Context",
+    "sample_type": "Sample Type",
+    "groups": "Groups",
+    "date": "Date",
+    "actions": "Actions",
+    "plot_detail": "Spectrum Detail",
+    "metabolite_ident": "Identification",
+    "data_analysis": "Data Analysis",
+    "delete": "Delete",
+    "delete_confirm": "Confirm to delete?"
+  },
+  "pagination": {
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "options": {
+    "cell_tissue": "cell/tissue",
+    "serum": "serum",
+    "urine": "urine",
+    "amniotic": "amniotic"
+  },
+  "buttons": {
+    "left_shift": "Shift Left",
+    "right_shift": "Shift Right",
+    "increase_height": "Increase Height",
+    "decrease_height": "Decrease Height",
+    "confirm": "Confirm",
+    "identify": "Identification",
+    "select_peaks": "Select Peaks",
+    "align_fit": "Align/Fit",
+    "integrate": "Integration region",
+    "quantify": "Quantification",
+    "validate": "Validate",
+    "delete": "Delete",
+    "submit": "Submit",
+    "check_peak": "Check Peak",
+    "save_selections": "Save Selections",
+    "generate_instruction": "Generate AI Instruction",
+    "back": "Back",
+    "generate_chinese_instruction": "Generate Chinese Instruction",
+    "generate_english_instruction": "Generate English Instruction",
+    "deepseek": "DeepSeek",
+    "qianwen": "Qwen"
+  },
+  "titles": {
+    "identification": "Identification Results",
+    "metabolite_table": "Metabolite Identification Table",
+    "quan_region": "Integration region",
+    "quan_table": "Metabolite integral region table",
+    "select_peaks": "Select Metabolite Peaks",
+    "selected_metabolites": "Selected Metabolites",
+    "integration_results": "Integration Results",
+    "analysis_results": "Analysis Results",
+    "anova_results": "One-way ANOVA Results for Metabolites",
+    "f_statistics": "F Statistics and P Values",
+    "effect_size": "Effect Size (Eta Squared)",
+    "diagnostic_tests": "Normality and Homogeneity of Variance Tests",
+    "generated_title": "Generated instructions"
+  },
+  "modal": {
+    "peak_plot_title": "Peak Plot",
+    "loading_alt": "Loading plot..."
+  },
+  "tabs": {
+    "violin": "Violin Plot",
+    "anova": "F Statistics",
+    "effect": "Effect Size",
+    "diagnostic": "Diagnostic Tests"
+  },
+  "labels": {
+    "na": "N/A",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "images": {
+    "violin": "Violin Plot"
+  }
+}

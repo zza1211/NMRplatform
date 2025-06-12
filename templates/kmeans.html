@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">KMeans 聚类分析结果</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .lang-switcher {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-i18n="nav.back">返回</a>
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+</nav>
+<div class="container mt-4">
+    <h1 data-i18n="heading">KMeans 聚类分析</h1>
+
+    <!-- 参数选择表单 -->
+    <form class="form-inline mb-4" method="get" action="">
+        <div class="form-group mr-3">
+            <label for="mode" class="mr-2" data-i18n="form.cluster_type">聚类类型:</label>
+            <select name="mode" id="mode" class="form-control">
+                <option value="sample" {% if mode == 'sample' %}selected{% endif %} data-i18n="form.sample_clustering">样本聚类</option>
+                <option value="attribute" {% if mode == 'attribute' %}selected{% endif %} data-i18n="form.attribute_clustering">属性聚类</option>
+            </select>
+        </div>
+        <div class="form-group mr-3">
+            <label for="n_clusters" class="mr-2" data-i18n="form.cluster_number">类别数:</label>
+            <input type="number" name="n_clusters" id="n_clusters" class="form-control" value="{{ n_clusters }}" min="2">
+        </div>
+        <button type="submit" class="btn btn-primary" data-i18n="form.start_clustering">开始聚类</button>
+    </form>
+
+    <!-- PCA 聚类散点图 -->
+    <div class="mb-4">
+        <h3 data-i18n="visualization.pca_title">PCA 降维后聚类图</h3>
+        <img src="data:image/png;base64,{{ pca_img }}" class="img-fluid" data-i18n="visualization.pca_alt" alt="PCA 图">
+    </div>
+
+    <!-- 轮廓系数显示 -->
+    <div class="mb-4">
+        <h4 data-i18n="metrics.silhouette">轮廓系数 (Silhouette Score): {{ sil_score|round(3) }}</h4>
+    </div>
+
+    <!-- 各类别均值折线图 -->
+    <div class="mb-4">
+        <h3 data-i18n="visualization.means_title">各类别均值折线图</h3>
+        <img src="data:image/png;base64,{{ line_img }}" class="img-fluid" data-i18n="visualization.means_alt" alt="均值折线图">
+    </div>
+
+    <!-- 各类别均值表格 -->
+    <div class="mb-4">
+        <h3 data-i18n="table.title">各类别均值表格</h3>
+        <table class="table table-bordered table-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th data-i18n="table.cluster">类别</th>
+                    {% for key in cluster_means_table[0].keys() if key != 'Cluster' %}
+                    <th>{{ key }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in cluster_means_table %}
+                <tr>
+                    <td>{{ row.Cluster }}</td>
+                    {% for key, value in row.items() if key != 'Cluster' %}
+                    <td>{{ "%.3f"|format(value) }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "KMeans 聚类分析结果",
+            nav: { back: "返回" },
+            heading: "KMeans 聚类分析",
+            form: {
+                cluster_type: "聚类类型:",
+                sample_clustering: "样本聚类",
+                attribute_clustering: "属性聚类",
+                cluster_number: "类别数:",
+                start_clustering: "开始聚类"
+            },
+            visualization: {
+                pca_title: "PCA 降维后聚类图",
+                pca_alt: "PCA 图",
+                means_title: "各类别均值折线图",
+                means_alt: "均值折线图"
+            },
+            metrics: {
+                silhouette: "轮廓系数 (Silhouette Score):"
+            },
+            table: {
+                title: "各类别均值表格",
+                cluster: "类别"
+            }
+        },
+        en: {
+            title: "KMeans Clustering Results",
+            nav: { back: "Back" },
+            heading: "KMeans Clustering Analysis",
+            form: {
+                cluster_type: "Cluster Type:",
+                sample_clustering: "Sample Clustering",
+                attribute_clustering: "Attribute Clustering",
+                cluster_number: "Number of Clusters:",
+                start_clustering: "Start Clustering"
+            },
+            visualization: {
+                pca_title: "PCA Reduced Clustering Plot",
+                pca_alt: "PCA Plot",
+                means_title: "Cluster Means Line Chart",
+                means_alt: "Means Line Chart"
+            },
+            metrics: {
+                silhouette: "Silhouette Score:"
+            },
+            table: {
+                title: "Cluster Means Table",
+                cluster: "Cluster"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                if (el.tagName === 'IMG') {
+                    el.alt = value;
+                } else if (el.tagName === 'OPTION') {
+                    el.textContent = value;
+                } else {
+                    el.textContent = value;
+                }
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

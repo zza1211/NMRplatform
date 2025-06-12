@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>选择物种 - 通路分析</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">通路分析 - 物种选择</h1>
+        <form method="post">
+            <div class="form-group">
+                <label for="species">选择物种:</label>
+                <select class="form-control" id="species" name="species">
+                    {% for sp in species_options %}
+                    <option value="{{ sp }}">{{ sp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">开始分析</button>
+        </form>
+    </div>
+</body>
+</html>

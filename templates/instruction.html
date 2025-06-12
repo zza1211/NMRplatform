@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>生成的大模型指令</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" data-key="navbar.brand">Metanaly</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/" data-key="navbar.upload">数据上传 <span
+                        class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+        <div class="btn-group">
+            <button id="lang-zh" class="btn btn-sm btn-outline-secondary">中文</button>
+            <button id="lang-en" class="btn btn-sm btn-outline-secondary">English</button>
+        </div>
+    </div>
+</nav>
+<div class="container mt-4">
+    <h1 data-key="titles.generated_title">生成的大模型指令</h1>
+    <pre>{{ instruction }}</pre>
+    <p>选中的文件：{{ selected_files | join(', ') }}</p>
+    <a href="{{ url_for('llm', id=id) }}" class="btn btn-info"
+       data-key="buttons.deepseek">DeepSeek生成实验报告</a>
+    <a href="{{ url_for('qianwen', id=id) }}" class="btn btn-info"
+       data-key="buttons.qianwen">通义千问生成实验报告</a>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 国际化功能
+    function loadLocale(locale) {
+        localStorage.setItem('lang', locale);
+        $.getJSON(`/static/locales/${locale}.json`, function(data) {
+            $('[data-key]').each(function() {
+                const key = $(this).data('key');
+                const keys = key.split('.');
+                let value = data;
+                keys.forEach(k => value = value?.[k]);
+                if (value) {
+                    if ($(this).is('input[placeholder], select')) {
+                        $(this).attr('placeholder', value);
+                    } else {
+                        $(this).text(value);
+                    }
+                }
+            });
+            // 更新按钮状态
+            $('[id^="lang-"]').removeClass('active');
+            $(`#lang-${locale}`).addClass('active');
+        });
+    }
+
+    $('#lang-zh').click(() => loadLocale('zh'));
+    $('#lang-en').click(() => loadLocale('en'));
+
+    // 初始化加载语言
+    const savedLang = localStorage.getItem('lang') || 'zh';
+    loadLocale(savedLang);
+    </script>
+</body>
+</html>

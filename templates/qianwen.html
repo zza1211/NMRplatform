@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">大模型问答</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        /* 加载框样式 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #333;
+        }
+        #answer {
+            margin-top: 20px;
+            white-space: pre-wrap; /* 保留换行和空格 */
+            word-wrap: break-word; /* 长单词换行 */
+        }
+        .lang-switcher {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载框 -->
+    <div id="loading" data-i18n="loading">模型回答中，请稍候……</div>
+
+    <div class="container mt-4">
+        <div class="lang-switcher">
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+        </div>
+
+        <h1 data-i18n="heading">大模型问答结果</h1>
+        <div id="answer"></div>
+    </div>
+
+    <script>
+        // Language dictionary
+        const i18n = {
+            zh: {
+                title: "大模型问答",
+                heading: "大模型问答结果",
+                loading: "模型回答中，请稍候……",
+                error: "发生错误："
+            },
+            en: {
+                title: "AI Q&A",
+                heading: "AI Q&A Results",
+                loading: "Generating answer, please wait...",
+                error: "Error occurred: "
+            }
+        };
+
+        // Switch language function
+        function switchLanguage(lang) {
+            localStorage.setItem('preferredLang', lang);
+            document.documentElement.lang = lang;
+
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const keys = el.getAttribute('data-i18n').split('.');
+                let value = i18n[lang];
+
+                for (const key of keys) {
+                    value = value[key];
+                    if (!value) break;
+                }
+
+                if (value) {
+                    el.textContent = value;
+                }
+            });
+
+            // Update title separately
+            document.title = i18n[lang].title;
+        }
+
+        // Initialize language
+        const savedLang = localStorage.getItem('preferredLang') || 'zh';
+        switchLanguage(savedLang);
+
+        $(document).ready(function(){
+            $.ajax({
+                url: "/qianwen_answer/{{ id }}",
+                type: "GET",
+                dataType: "json",
+                beforeSend: function() {
+                    $("#loading").show();
+                },
+                success: function(data){
+                    // Display answer with preserved formatting
+                    $("#answer").html(data.answer.replace(/\n/g, '<br>'));
+                    $("#loading").hide();
+                },
+                error: function(xhr, status, error){
+                    $("#answer").html(i18n[savedLang].error + error);
+                    $("#loading").hide();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

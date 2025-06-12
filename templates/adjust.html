@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title data-key="title">调整代谢物谱图</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ml-spectra-processing"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#" id="go-back" data-key="navbar.back">返回</a>
+    <div class="ml-auto">
+        <button id="lang-zh" class="btn btn-sm btn-outline-secondary">中文</button>
+        <button id="lang-en" class="btn btn-sm btn-outline-secondary">English</button>
+    </div>
+</nav>
+
+<div id="plotContainer" style="width: 80%; height: 400px; margin: auto;"></div>
+
+<div class="container mt-3">
+    <div class="btn-group">
+        <button id="leftShift" class="btn btn-primary" data-key="buttons.left_shift">左移</button>
+        <button id="rightShift" class="btn btn-primary" data-key="buttons.right_shift">右移</button>
+        <button id="increaseHeight" class="btn btn-primary" data-key="buttons.increase_height">增高</button>
+        <button id="decreaseHeight" class="btn btn-primary" data-key="buttons.decrease_height">降低</button>
+    </div>
+
+    <div class="form-group mt-3">
+        <label for="peakLocation" data-key="form.peak_location">未重叠谱峰位置</label>
+        <input type="text" class="form-control" id="peakLocation"
+               data-key="form.peak_placeholder" placeholder="输入未重叠谱峰位置">
+    </div>
+
+    <button id="confirm" class="btn btn-success mt-2" data-key="buttons.confirm">确定</button>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    const data = {{ data|tojson }}; // 从后端传递来的谱图数据
+    const id = {{ id }}; // 当前 ID
+    let pureSpectrum = data.pure;
+    let mixedSpectrum = data.mixed;
+    let xData = data.x;
+
+    // 绘制初始图
+    function plotSpectrum(pure, mixed) {
+        const pureTrace = {
+            x: xData,
+            y: pure,
+            mode: "lines",
+            name: "纯代谢物谱图",
+            fill: "tozeroy",
+            fillcolor: "rgba(173,216,230,0.5)"
+        };
+        const mixedTrace = {
+            x: xData,
+            y: mixed,
+            mode: "lines",
+            name: "混合物谱图"
+        };
+        Plotly.newPlot("plotContainer", [pureTrace, mixedTrace], {
+            title: "代谢物谱图调整",
+            xaxis: {title: "化学位移"},
+            yaxis: {title: "信号强度"}
+        });
+    }
+
+    plotSpectrum(pureSpectrum, mixedSpectrum);
+
+    // 左右移动函数
+    function shiftSpectrum(spectrum, shiftAmount) {
+        return spectrum.slice(-shiftAmount).concat(spectrum.slice(0, -shiftAmount));
+    }
+
+    // 事件绑定
+    document.getElementById("leftShift").addEventListener("click", () => {
+        pureSpectrum = shiftSpectrum(pureSpectrum, -3);
+        plotSpectrum(pureSpectrum, mixedSpectrum);
+    });
+
+    document.getElementById("rightShift").addEventListener("click", () => {
+        pureSpectrum = shiftSpectrum(pureSpectrum, 3);
+        plotSpectrum(pureSpectrum, mixedSpectrum);
+    });
+
+    // 增高按钮
+    document.getElementById("increaseHeight").addEventListener("click", () => {
+        pureSpectrum = pureSpectrum.map(value => value * 1.1); // 每次乘以1.1
+        plotSpectrum(pureSpectrum, mixedSpectrum);
+    });
+
+    // 降低按钮
+    document.getElementById("decreaseHeight").addEventListener("click", () => {
+        pureSpectrum = pureSpectrum.map(value => value * 0.9); // 每次乘以0.9
+        plotSpectrum(pureSpectrum, mixedSpectrum);
+    });
+
+    document.getElementById("confirm").addEventListener("click", () => {
+        const peakLocation = document.getElementById("peakLocation").value; // 获取输入框中的未重叠谱峰位置
+
+        // 提交更新后的纯代谢物谱图到后端
+        fetch("/apply_adjustment", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                adjustedSpectrum: pureSpectrum,
+                id: id,
+                peak: data.peak,
+                peakLocation: peakLocation // 新增的参数
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // 后端返回确认消息
+                const redirectUrl = `/alig_or_mod/${id}`;
+                window.location.href = redirectUrl;
+            })
+            .catch(error => {
+                console.error("提交失败:", error);
+                alert("提交失败，请重试！");
+            });
+    });
+
+    document.getElementById("go-back").addEventListener("click", function () {
+        // 返回到分析页面
+        window.location.href = "/alig_or_mod/{{ id }}";
+    });
+    // 国际化功能
+    function loadLocale(locale) {
+        localStorage.setItem('lang', locale);
+        $.getJSON(`/static/locales/${locale}.json`, function(data) {
+            $('[data-key]').each(function() {
+                const key = $(this).data('key');
+                const keys = key.split('.');
+                let value = data;
+                keys.forEach(k => value = value?.[k]);
+                if (value) {
+                    if ($(this).is('input[placeholder], select')) {
+                        $(this).attr('placeholder', value);
+                    } else {
+                        $(this).text(value);
+                    }
+                }
+            });
+            // 更新按钮状态
+            $('[id^="lang-"]').removeClass('active');
+            $(`#lang-${locale}`).addClass('active');
+        });
+    }
+
+    $('#lang-zh').click(() => loadLocale('zh'));
+    $('#lang-en').click(() => loadLocale('en'));
+
+    // 初始化加载语言
+    const savedLang = localStorage.getItem('lang') || 'zh';
+    loadLocale(savedLang);
+</script>
+
+</body>
+</html>

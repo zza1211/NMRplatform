@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">通路分析结果</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .lang-switcher { margin-left: auto; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('pathway', id=id) }}" data-i18n="nav.back">返回</a>
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+</nav>
+<div class="container mt-4">
+    <h1 class="mb-4" data-i18n="heading">通路分析结果</h1>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="bubble-tab" data-toggle="tab" href="#bubble" role="tab" data-i18n="tabs.bubble">气泡图</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="table-tab" data-toggle="tab" href="#table" role="tab" data-i18n="tabs.table">结果表</a>
+        </li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content mt-3" id="resultTabsContent">
+        <!-- Bubble plot -->
+        <div class="tab-pane fade show active" id="bubble" role="tabpanel">
+            <div class="plot-container text-center">
+                <h2 data-i18n="bubble.title">通路富集气泡图</h2>
+                <img src="data:image/png;base64,{{ plot_image }}" alt="Bubble Plot">
+            </div>
+        </div>
+        <!-- Results table -->
+        <div class="tab-pane fade" id="table" role="tabpanel">
+            <h2 data-i18n="table.title">分析结果表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th data-i18n="table.pathway_id">Pathway ID</th>
+                        <th data-i18n="table.pathway_name">Pathway Name</th>
+                        <th data-i18n="table.match_status">Match Status</th>
+                        <th data-i18n="table.p_value">p</th>
+                        <th data-i18n="table.log_p">-log(p)</th>
+{#                        <th data-i18n="table.holm_p">Holm p</th>#}
+                        <th data-i18n="table.fdr">FDR</th>
+                        <th data-i18n="table.piv">PIV</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td>{{ row.pathway_id }}</td>
+                        <td>{{ row.pathway_name }}</td>
+                        <td>{{ row.match_status }}</td>
+                        <td>{{ row.p_value|round(5) }}</td>
+                        <td>{{ row.log_p|round(2) }}</td>
+{#                        <td>{{ row.holm_p|round(5) }}</td>#}
+                        <td>{{ row.fdr|round(5) }}</td>
+                        <td>{{ row.piv|round(3) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const i18n = {
+        zh: {
+            title: "通路分析结果",
+            nav: { back: "返回" },
+            heading: "通路分析结果",
+            tabs: { bubble: "气泡图", table: "结果表" },
+            bubble: { title: "通路富集气泡图" },
+            table: { title: "分析结果表", pathway_id: "Pathway ID", pathway_name: "Pathway Name", match_status: "Match Status", p_value: "p", log_p: "-log(p)", holm_p: "Holm p", fdr: "FDR", piv: "PIV" }
+        },
+        en: {
+            title: "Pathway Analysis Results",
+            nav: { back: "Back to analysis" },
+            heading: "Pathway Analysis Results",
+            tabs: { bubble: "Bubble Plot", table: "Results Table" },
+            bubble: { title: "Pathway Enrichment Bubble Plot" },
+            table: { title: "Analysis Results", pathway_id: "Pathway ID", pathway_name: "Pathway Name", match_status: "Match Status", p_value: "p", log_p: "-log(p)", holm_p: "Holm p", fdr: "FDR", piv: "PIV" }
+        }
+    };
+
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            let keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+            keys.forEach(k => { value = value[k] !== undefined ? value[k] : value; });
+            if (value) el.textContent = value;
+        });
+        document.title = i18n[lang].title;
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedLang = localStorage.getItem('preferredLang') || 'zh';
+        switchLanguage(savedLang);
+    });
+</script>
+</body>
+</html>

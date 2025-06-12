@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">代谢物逻辑回归分析</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+    <style>
+        .lang-switcher {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-i18n="nav.back">返回</a>
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+</nav>
+<div class="container">
+    <h1 class="mt-5" data-i18n="heading">代谢物逻辑回归分析</h1>
+
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form id="analysisForm" method="post">
+        <div class="form-group">
+            <label for="metabolites" data-i18n="form.metabolites_label">选择参与逻辑回归的代谢物 (可多选):</label>
+            <select multiple class="form-control" id="metabolites" name="metabolites">
+                {% for m in metabolites %}
+                <option value="{{ m }}">{{ m }}</option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted" data-i18n="form.metabolites_hint">按住 Ctrl 键（或 Command 键）可多选</small>
+        </div>
+        <div class="form-group">
+            <label for="group1" data-i18n="form.group1_label">选择分类组别 (组1):</label>
+            <select class="form-control" id="group1" name="group1">
+                {% for g in groups %}
+                <option value="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="group2" data-i18n="form.group2_label">选择分类组别 (组2):</label>
+            <select class="form-control" id="group2" name="group2">
+                {% for g in groups %}
+                <option value="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" data-i18n="form.submit">运行逻辑回归</button>
+    </form>
+</div>
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "代谢物逻辑回归分析",
+            nav: { back: "返回" },
+            heading: "代谢物逻辑回归分析",
+            form: {
+                metabolites_label: "选择参与逻辑回归的代谢物 (可多选):",
+                metabolites_hint: "按住 Ctrl 键（或 Command 键）可多选",
+                group1_label: "选择分类组别 (组1):",
+                group2_label: "选择分类组别 (组2):",
+                submit: "运行逻辑回归"
+            }
+        },
+        en: {
+            title: "Metabolite Logistic Regression Analysis",
+            nav: { back: "Back" },
+            heading: "Metabolite Logistic Regression Analysis",
+            form: {
+                metabolites_label: "Select metabolites for logistic regression (multiple selection):",
+                metabolites_hint: "Hold Ctrl (or Command) key to select multiple",
+                group1_label: "Select classification group (Group 1):",
+                group2_label: "Select classification group (Group 2):",
+                submit: "Run Logistic Regression"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                el.textContent = value;
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

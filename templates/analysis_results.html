@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-key="titles.analysis_results">分析结果列表</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="ml-auto">
+        <button id="lang-zh" class="btn btn-sm btn-outline-secondary">中文</button>
+        <button id="lang-en" class="btn btn-sm btn-outline-secondary">English</button>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h1 data-key="titles.analysis_results">分析结果列表</h1>
+    <form id="analysisForm" method="post">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th data-key="table.headers.method">方法</th>
+                    <th data-key="table.headers.group_info">组别信息</th>
+                    <th data-key="table.headers.select">选择</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <td>{{ file.method }}</td>
+                    <td>{{ file.group_info }}</td>
+                    <td><input type="checkbox" name="selected_files" value="{{ file.filename }}"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="ml-auto">
+            <button type="button" id="generateChinese" class="btn btn-primary" data-key="buttons.generate_chinese_instruction">生成中文大模型指令</button>
+            <button type="button" id="generateEnglish" class="btn btn-primary" data-key="buttons.generate_english_instruction">生成英文大模型指令</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Internationalization function
+    function loadLocale(locale) {
+        $.getJSON(`/static/locales/${locale}.json`, function(data) {
+            $('[data-key]').each(function() {
+                const $elem = $(this);
+                const key = $elem.data('key');
+                const keys = key.split('.');
+                let value = data;
+                keys.forEach(k => value = value?.[k]);
+
+                if (value) {
+                    if ($elem.is('input[placeholder]')) {
+                        $elem.attr('placeholder', value);
+                    } else if ($elem.is('title')) {
+                        document.title = value;
+                    } else {
+                        $elem.text(value);
+                    }
+                }
+            });
+        });
+    }
+
+    // Language switch events
+    $('#lang-zh').click(() => loadLocale('zh'));
+    $('#lang-en').click(() => loadLocale('en'));
+
+    // Generate instruction buttons
+    $('#generateChinese').click(function() {
+        $('#analysisForm').attr('action', `/generate_instruction/{{ id }}/zh`);
+        $('#analysisForm').submit();
+    });
+
+    $('#generateEnglish').click(function() {
+        $('#analysisForm').attr('action', `/generate_instruction/{{ id }}/en`);
+        $('#analysisForm').submit();
+    });
+
+    // Load Chinese by default
+    loadLocale('zh');
+</script>
+</body>
+</html>

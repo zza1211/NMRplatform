@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="title">代谢物通路富集分析</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+    <style>
+        .lang-switcher {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('findata', id=id) }}" data-i18n="nav.back">返回</a>
+    <div class="lang-switcher">
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('zh')">中文</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="switchLanguage('en')">English</button>
+    </div>
+</nav>
+<div class="container">
+    <h1 class="mt-5" data-i18n="heading">代谢物通路富集分析</h1>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" id="pathwayForm">
+        <div class="form-group">
+            <label for="metabolites" data-i18n="form.metabolites_label">选择特征性代谢物 (可多选):</label>
+            <select multiple class="form-control" id="metabolites" name="metabolites" style="height:300px;">
+                {% for m in metabolites %}
+                    <option value="{{ m }}">{{ m }}</option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted" data-i18n="form.metabolites_hint">按住 Ctrl (或 Command) 键可多选</small>
+        </div>
+        <div class="form-group">
+            <label for="species" data-i18n="form.species_label">选择物种信息:</label>
+            <select class="form-control" id="species" name="species">
+                {% for code, name in species_options %}
+                    <option value="{{ code }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="group1" data-i18n="form.group1_label">选择分类组别 (组1):</label>
+            <select class="form-control" id="group1" name="group1">
+                {% for g in groups %}
+                    <option value="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="group2" data-i18n="form.group2_label">选择分类组别 (组2):</label>
+            <select class="form-control" id="group2" name="group2">
+                {% for g in groups %}
+                    <option value="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" data-i18n="form.submit">运行通路富集分析</button>
+    </form>
+</div>
+
+<script>
+    // Language dictionary
+    const i18n = {
+        zh: {
+            title: "代谢物通路富集分析",
+            nav: { back: "返回" },
+            heading: "代谢物通路富集分析",
+            form: {
+                metabolites_label: "选择特征性代谢物 (可多选):",
+                metabolites_hint: "按住 Ctrl (或 Command) 键可多选",
+                species_label: "选择物种信息:",
+                group1_label: "选择分类组别 (组1):",
+                group2_label: "选择分类组别 (组2):",
+                submit: "运行通路富集分析"
+            }
+        },
+        en: {
+            title: "Metabolite Pathway Enrichment Analysis",
+            nav: { back: "Back" },
+            heading: "Metabolite Pathway Enrichment Analysis",
+            form: {
+                metabolites_label: "Select characteristic metabolites (multiple selection):",
+                metabolites_hint: "Hold Ctrl (or Command) key to select multiple",
+                species_label: "Select species information:",
+                group1_label: "Select classification group (Group 1):",
+                group2_label: "Select classification group (Group 2):",
+                submit: "Run Pathway Enrichment Analysis"
+            }
+        }
+    };
+
+    // Switch language function
+    function switchLanguage(lang) {
+        localStorage.setItem('preferredLang', lang);
+        document.documentElement.lang = lang;
+
+        // Update all elements with data-i18n attribute
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const keys = el.getAttribute('data-i18n').split('.');
+            let value = i18n[lang];
+
+            for (const key of keys) {
+                value = value[key];
+                if (!value) break;
+            }
+
+            if (value) {
+                el.textContent = value;
+            }
+        });
+
+        // Update title separately
+        document.title = i18n[lang].title;
+    }
+
+    // Initialize language
+    const savedLang = localStorage.getItem('preferredLang') || 'zh';
+    switchLanguage(savedLang);
+</script>
+</body>
+</html>

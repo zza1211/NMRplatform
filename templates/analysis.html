@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metanaly</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <style>
+        /* 调整内容可编辑列样式 */
+        td[contenteditable="true"] {
+            background-color: #f9f9f9;
+            outline: none;
+        }
+
+        td[contenteditable="true"]:focus {
+            background-color: #e9ecef;
+        }
+
+        .group-color-1 {
+            background-color: #e3f2fd;
+        }
+
+        /* 蓝色 */
+        .group-color-2 {
+            background-color: #fce4ec;
+        }
+
+        /* 粉色 */
+        .group-color-3 {
+            background-color: #e8f5e9;
+        }
+
+        /* 绿色 */
+        .group-color-4 {
+            background-color: #fff3e0;
+        }
+
+        /* 橙色 */
+        .group-color-5 {
+            background-color: #ede7f6;
+        }
+
+        /* 紫色 */
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" data-key="navbar.brand">Metanaly</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/" data-key="navbar.upload">数据上传 <span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+        <div class="btn-group">
+            <button id="lang-zh" class="btn btn-sm btn-outline-secondary">中文</button>
+            <button id="lang-en" class="btn btn-sm btn-outline-secondary">English</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-5">
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-light">
+            <tr>
+                <th data-key="table.headers.object">研究对象</th>
+                <th data-key="table.headers.context">研究内容</th>
+                <th data-key="table.headers.sample_type">样本类型</th>
+                <th data-key="table.headers.groups">样本组数</th>
+                <th data-key="table.headers.status">状态</th>
+                <th data-key="table.headers.actions">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>{{ fileinfo.object }}</td>
+                <td>{{ fileinfo.context }}</td>
+                <td>{{ fileinfo.sample }}</td>
+                <td>{{ fileinfo.gp }}</td>
+                <td>{{ stat }}</td>
+                <td>
+                    <a href="{{ url_for('nmrformer', id=fileinfo.id) }}" class="btn btn-sm btn-info" data-key="buttons.identify">代谢物指认</a>
+                    <a href="{{ url_for('meta_select', id=fileinfo.id) }}" class="btn btn-sm btn-info" data-key="buttons.select_peaks">选择积分谱峰</a>
+                    <a href="{{ url_for('alig_or_mod', id=fileinfo.id) }}" class="btn btn-sm btn-info" data-key="buttons.align_fit">对齐/拟合</a>
+                    <a href="{{ url_for('get_region', id=fileinfo.id) }}" class="btn btn-sm btn-info" data-key="buttons.integrate">划分积分区域</a>
+                    <a href="{{ url_for('quantification', id=fileinfo.id) }}" class="btn btn-sm btn-info" data-key="buttons.quantify">相对定量</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if plot_html %}
+    <div class="container-fluid">
+        <h4 class="text-center mt-4" data-key="titles.identification">指认结果</h4>
+        {{ plot_html|safe }}
+    </div>
+    <div id="contentContainer"></div>
+    <div class="container my-5">
+        <h4 class="mb-3" data-key="titles.metabolite_table">代谢物指认结果表</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="csvTable">
+                <thead>
+                <tr>
+                    {% for header in csv_headers %}
+                        <th data-key="table.metabolite_headers.{{ header }}">{{ header }}</th>
+                    {% endfor %}
+                    <th data-key="table.headers.modify">结果修改</th>
+                    <th data-key="table.headers.actions">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in csv_rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                        <td contenteditable="true"></td>
+                        <td>
+                            <button class="btn btn-sm btn-success validate-row"
+                                    data-metabolite="{{ row[1] }}"
+                                    data-peak="{{ row[0] }}"
+                                    data-file-id="{{ fileinfo.id }}"
+                                    data-key="buttons.validate">
+                                验证
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-row" data-key="buttons.delete">删除</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button id="submitTable" class="btn btn-primary mt-3" data-key="buttons.submit">提交修改</button>
+    </div>
+{% endif %}
+{% if plot_html1 %}
+    <div class="container-fluid">
+        <h4 class="text-center mt-4" data-key="titles.quan_region">积分区域</h4>
+        {{ plot_html1|safe }}
+    </div>
+    <!-- 新增的代谢物积分区域 -->
+    <div class="container my-5">
+        <h4 class="mb-3" data-key="titles.quan_table">代谢物积分区域表</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="regionTable">
+                <thead>
+                <tr>
+                    <th data-key="table.headers.metabolite_name">代谢物名称</th>
+                    <th data-key="table.headers.integral_left">积分区域左侧值</th>
+                    <th data-key="table.headers.integral_right">积分区域右侧值</th>
+                    <th data-key="table.headers.actions">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for metabolite, region in integral_regions %}
+                    <tr>
+                        <td contenteditable="true">{{ metabolite }}</td>
+                        <td contenteditable="true">{{ "%.4f" | format(region[0]) }}</td>
+                        <td contenteditable="true">{{ "%.4f" | format(region[1]) }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger delete-row" data-key="buttons.delete">删除</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button id="submitRegion" class="btn btn-primary mt-3" data-key="buttons.submit">提交修改</button>
+    </div>
+{% endif %}
+{% if grouped_data %}
+    <div class="container mt-5">
+        <h1 class="text-center" data-key="titles.select_peaks">选择代谢物谱峰</h1>
+        <table class="table table-bordered table-hover mt-4">
+            <thead class="thead-dark">
+            <tr>
+                <th data-key="table.headers.peak">谱峰</th>
+                <th data-key="table.headers.metabolite">代谢物</th>
+                <th data-key="table.headers.selection">选择</th>
+                <th data-key="table.headers.actions">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for metabolite, rows in grouped_data.items() %}
+                {% set color_class = 'group-color-' + ((loop.index0 % 5) + 1)|string %}
+                {% for row in rows %}
+                    <tr class="{{ color_class }}">
+                        <td>{{ "%.3f" | format(row['peak']) }}</td>
+                        <td>{{ row['指认结果'] }}</td>
+                        <td>
+                            <input type="radio" name="{{ metabolite }}" value="{{ row['peak'] }}"
+                                   data-metabolite="{{ metabolite }}"
+                                   {% if loop.index == 1 %}checked{% endif %}
+                                   style="transform: scale(1.5);">
+                        </td>
+                        <td>
+                            <button class="btn btn-primary btn-check-plot"
+                                    data-metabolite="{{ row['指认结果'] }}"
+                                    data-peak="{{ row['peak'] }}"
+                                    data-file-id="{{ fileinfo.id }}"
+                                    data-key="buttons.check_peak">
+                                检查谱峰
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+        <button id="save-btn" class="btn btn-primary mt-3" data-key="buttons.save_selections">Save Selections</button>
+    </div>
+{% endif %}
+{% if plotly_html_ali %}
+    <div class="container-fluid">
+        <h4 class="text-center mt-4" data-key="titles.selected_metabolites">已选择代谢物</h4>
+        {{ plotly_html_ali|safe }}
+    </div>
+    <div id="contentContainer"></div>
+    <div class="container my-5">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="csvTable">
+                <thead>
+                <tr>
+                    {% for header in ali_headers %}
+                        <th data-key="table.ali_headers.{{ header }}">{{ header }}</th>
+                    {% endfor %}
+                    <th data-key="table.headers.actions">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in ali_rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                        <td>
+                            <button class="btn btn-primary btn-check-ali-plot"
+                                    data-metabolite="{{ row[0] }}"
+                                    data-peak="{{ row[1] }}"
+                                    data-file-id="{{ fileinfo.id }}"
+                                    data-key="buttons.view_peak">
+                                查看谱峰
+                            </button>
+                            <button class="btn btn-primary btn-check-alipeak"
+                                    data-metabolite="{{ row[0] }}"
+                                    data-peak="{{ row[1] }}"
+                                    data-file-id="{{ fileinfo.id }}"
+                                    data-key="buttons.align_peak">
+                                对齐谱峰
+                            </button>
+                            <button class="btn btn-success adjust-button"
+                                    data-key="buttons.fit_peak">
+                                拟合谱峰
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+<!-- 模态框 -->
+<div class="modal fade" id="plotModal" tabindex="-1" role="dialog" aria-labelledby="plotModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="plotModalLabel" data-key="modal.peak_plot_title">Peak Plot</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="plot-image" src="" data-key="modal.loading_alt" alt="Loading plot..." class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if qrows %}
+    <h4 class="mb-3" data-key="titles.integration_results">积分结果表</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="csvTable">
+            <thead>
+            <tr>
+                {% for header in qheaders %}
+                    <th data-key="table.qheaders.{{ header }}">{{ header }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in qrows %}
+                <tr>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{#<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>#}
+<script>
+    // 国际化功能
+    function loadLocale(locale) {
+        localStorage.setItem('lang', locale);
+        $.getJSON(`/static/locales/${locale}.json`, function(data) {
+            $('[data-key]').each(function() {
+                const key = $(this).data('key');
+                const keys = key.split('.');
+                let value = data;
+                keys.forEach(k => value = value?.[k]);
+                if (value) {
+                    if ($(this).is('input[placeholder], select')) {
+                        $(this).attr('placeholder', value);
+                    } else {
+                        $(this).text(value);
+                    }
+                }
+            });
+            // 更新按钮状态
+            $('[id^="lang-"]').removeClass('active');
+            $(`#lang-${locale}`).addClass('active');
+        });
+    }
+
+    $('#lang-zh').click(() => loadLocale('zh'));
+    $('#lang-en').click(() => loadLocale('en'));
+
+    // 初始化加载语言
+    const savedLang = localStorage.getItem('lang') || 'zh';
+    loadLocale(savedLang);
+
+    // 删除行功能
+    $(document).on("click", ".delete-row", function () {
+        $(this).closest("tr").remove();
+    });
+
+    // 提交指认结果表格内容到后台
+    $("#submitTable").click(function () {
+        let tableData = [];
+        $("#csvTable tbody tr").each(function () {
+            let rowData = [];
+            $(this).find("td").each(function () {
+                rowData.push($(this).text().trim());
+            });
+            tableData.push(rowData);
+        });
+
+        $.ajax({
+            url: "{{ url_for('update_csv', id=fileinfo.id) }}",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({data: tableData}),
+            success: function (response) {
+                alert("表格已提交成功！");
+            },
+            error: function () {
+                alert("提交失败，请重试！");
+            }
+        });
+    });
+
+    // 提交积分区域表格内容到后台
+    $("#submitRegion").click(function () {
+        let regionData = [];
+        $("#regionTable tbody tr").each(function () {
+            let rowData = [];
+            $(this).find("td").each(function () {
+                rowData.push($(this).text().trim());
+            });
+            regionData.push(rowData);
+        });
+
+        $.ajax({
+            url: "{{ url_for('save_regions', id=fileinfo.id) }}",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({data: regionData}),
+            success: function (response) {
+                alert("积分区域已保存！");
+            },
+            error: function () {
+                alert("保存失败，请重试！");
+            }
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const buttons = document.querySelectorAll(".validate-row");
+
+        buttons.forEach(button => {
+            button.addEventListener("click", function () {
+                const metabolite = this.getAttribute("data-metabolite");
+                const peak = this.getAttribute("data-peak");
+                const fileId = this.getAttribute("data-file-id");
+
+                // 发送请求到后端
+                fetch("/validate_metabolite", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({metabolite, peak, file_id: fileId})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 设置图像并显示模态框
+                        document.getElementById("plot-image").src = data.image;
+                        $("#plotModal").modal("show");
+                    })
+                    .catch(error => console.error("Error fetching plot:", error));
+            });
+        });
+    });
+
+
+    $(document).on("click", ".adjust-button", function () {
+        var row = $(this).closest("tr");
+        var validationText = row.find("td").eq(0).text();
+        var peakValue = row.find("td").eq(1).text().trim();
+
+        // 获取动态 ID
+        var id = "{{ fileinfo.id }}";  // 从 Jinja 模板中获取 ID
+
+        // 构造目标 URL
+        var targetUrl = `/to_adjust/${id}?metabolite=${encodeURIComponent(validationText)}&peak=${encodeURIComponent(peakValue)}`;
+
+        // 跳转页面
+        window.location.href = targetUrl;
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+        const buttons = document.querySelectorAll(".btn-check-plot");
+
+        buttons.forEach(button => {
+            button.addEventListener("click", function () {
+                const metabolite = this.getAttribute("data-metabolite");
+                const peak = this.getAttribute("data-peak");
+                const fileId = this.getAttribute("data-file-id");
+
+                // 发送请求到后端
+                fetch("/get_plot", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({metabolite, peak, file_id: fileId})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 设置图像并显示模态框
+                        document.getElementById("plot-image").src = data.image;
+                        $("#plotModal").modal("show");
+                    })
+                    .catch(error => console.error("Error fetching plot:", error));
+            });
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const buttons = document.querySelectorAll(".btn-check-ali-plot");
+
+        buttons.forEach(button => {
+            button.addEventListener("click", function () {
+                const metabolite = this.getAttribute("data-metabolite");
+                const peak = this.getAttribute("data-peak");
+                const fileId = this.getAttribute("data-file-id");
+
+                // 发送请求到后端
+                fetch("/get_plot", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({metabolite, peak, file_id: fileId})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 设置图像并显示模态框
+                        document.getElementById("plot-image").src = data.image;
+                        $("#plotModal").modal("show");
+                    })
+                    .catch(error => console.error("Error fetching plot:", error));
+            });
+        });
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+        const buttons = document.querySelectorAll(".btn-check-alipeak");
+
+        buttons.forEach(button => {
+            button.addEventListener("click", function () {
+                const metabolite = this.getAttribute("data-metabolite");
+                const peak = this.getAttribute("data-peak");
+                const fileId = this.getAttribute("data-file-id");
+
+                // 发送请求到后端
+                fetch("/ali_peak", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({metabolite, peak, file_id: fileId})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 设置图像并显示模态框
+                        document.getElementById("plot-image").src = data.image;
+                        $("#plotModal").modal("show");
+                    })
+                    .catch(error => console.error("Error fetching plot:", error));
+            });
+        });
+    });
+
+    // 获取 fileinfo.id，从后端传递的参数中提取
+    const fileId = {{ fileinfo.id | tojson }};
+
+    document.getElementById('save-btn').addEventListener('click', function () {
+        const selections = [];
+        const inputs = document.querySelectorAll('input[type="radio"]:checked');
+        inputs.forEach(input => {
+            selections.push({
+                metabolite: input.getAttribute('data-metabolite'),
+                peak: parseFloat(input.value)
+            });
+        });
+
+        // 将 file_id 附加到请求中
+        fetch('/save_selection', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({selections: selections, file_id: fileId})
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
+
+</script>
+</body>
+</html>
