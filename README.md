@@ -47,7 +47,7 @@ Finally, enter python app.py in the command line to run the platform code.
 ## Usage
 The front page of the file is as follows:</br>
 ![image](https://github.com/zza1211/NMRplatform/blob/master/tutorial_fig1.png)</br>
-![image](https://github.com/zza1211/NMRplatform/blob/master/tutorial_fig1.png)</br>
+![image](https://github.com/zza1211/NMRplatform/blob/master/tutorial_fig2.png)</br>
 Sample type, research content, research objects, and research purposes can be filled in according to the experiment. There are two options for file type: zip and csv. If the zip type is selected, upload the NMR data exported by the Bruker NMR instrument, with samples from different groups placed in separate compressed folders.<br>
 Each time a new group is added, click the green plus sign once. If you choose to upload a CSV file, the first column of the CSV file must be chemical shifts, and starting from the second column are the sample spectra, with the column names being the sample names. Samples from different groups need to be stored in separate CSV files for upload.</br>
 Then you can manipulate the data as needed.
