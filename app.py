@@ -30,6 +30,7 @@ from matplotlib.colors import Normalize
 from matplotlib.patches import Ellipse
 from matplotlib_venn import venn2
 from openai import OpenAI
+import openai
 from plotly.subplots import make_subplots
 from scipy.interpolate import interpolate
 from scipy.stats import f_oneway, shapiro, levene, yeojohnson
@@ -100,11 +101,13 @@ class FileInfo(db.Model):
         db.session.close()
 
 
-# 初始化大模型客户端（请填写您的 api_key 等信息）
-client = OpenAI(
-    api_key="XXXXXXXXX",
-    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
-)
+# # 初始化大模型客户端（请填写您的 api_key 等信息）
+# client = OpenAI(
+#     api_key="XXXXXXXXX",
+#     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+# )
+#Set OpenAI API key
+openai.api_key = "your_openai_api_key"
 
 
 @app.route('/', endpoint='fileinfo', methods=["GET"])
@@ -2710,6 +2713,36 @@ def qianwen(id):
     return render_template("qianwen.html", id=id)
 
 
+# @app.route('/qianwen_answer/<int:id>')
+# def qianwen_answer(id):
+#     file_info = FileInfo.query.filter_by(id=id).first()
+#     tmp_folder = os.path.join(UPLOAD_FOLDER, 'analysis_tmp/', f'{secure_filename(file_info.file_name).split(".")[0]}/')
+#     txt_filename = f"instruction_{id}.txt"
+#     txt_filepath = os.path.join(tmp_folder, txt_filename)
+#
+#     with open('question.txt', 'r', encoding='utf-8') as f:
+#         question = f.read()
+#     with open(txt_filepath, 'r', encoding='utf-8') as f:
+#         question1 = f.read()
+#     question = question + question1
+#
+#     # 调用大模型接口（非流式模式）
+#     completion = client.chat.completions.create(
+#         model="qwen-plus",  # 可根据实际情况更换模型名称
+#         messages=[
+#             {'role': 'system', 'content': 'You are a helpful assistant.'},
+#             {'role': 'user', 'content': question}
+#         ],
+#     )
+#     # 将返回的结果转换为 JSON 字符串后解析为字典
+#     response_json = json.loads(completion.model_dump_json())
+#     answer = ""
+#     # 根据返回格式，提取 choices[0]["message"]["content"]
+#     if "choices" in response_json and len(response_json["choices"]) > 0:
+#         message = response_json["choices"][0].get("message", {})
+#         answer = message.get("content", "")
+#     return jsonify({"answer": answer})
+
 @app.route('/qianwen_answer/<int:id>')
 def qianwen_answer(id):
     file_info = FileInfo.query.filter_by(id=id).first()
@@ -2723,22 +2756,22 @@ def qianwen_answer(id):
         question1 = f.read()
     question = question + question1
 
-    # 调用大模型接口（非流式模式）
-    completion = client.chat.completions.create(
-        model="qwen-plus",  # 可根据实际情况更换模型名称
-        messages=[
-            {'role': 'system', 'content': 'You are a helpful assistant.'},
-            {'role': 'user', 'content': question}
-        ],
-    )
-    # 将返回的结果转换为 JSON 字符串后解析为字典
-    response_json = json.loads(completion.model_dump_json())
-    answer = ""
-    # 根据返回格式，提取 choices[0]["message"]["content"]
-    if "choices" in response_json and len(response_json["choices"]) > 0:
-        message = response_json["choices"][0].get("message", {})
-        answer = message.get("content", "")
+    try:
+        # 调用 OpenAI GPT 接口
+        response = openai.ChatCompletion.create(
+            model="gpt-4",  # 或使用 "gpt-3.5-turbo"
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": question}
+            ]
+        )
+        # 提取回答内容
+        answer = response['choices'][0]['message']['content']
+    except Exception as e:
+        answer = f"请求出错: {str(e)}"
+
     return jsonify({"answer": answer})
+
 
 
 def get_status(file_name):
