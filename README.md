@@ -21,7 +21,7 @@ c/c++
 
 First, you need to prepare the development environment. Mainly, you need to install the Python environment and the C/C++ environment.
 It is recommended to install the Python environment via Anaconda. You need to go to the Anaconda official website(https://www.anaconda.com/download) to download and install Anaconda, and after installation, you will have the Python running environment.
-As for the C/C++ running environment, it depends on the situation: if you are using a Windows system, you need to download the Visual Studio software(https://visualstudio.microsoft.com/zh-hans/downloads/); if you are using a Linux system, you can directly run sudo apt install gcc.
+As for the C/C++ running environment, it depends on the situation: if you are using a Windows system, you need to download the Visual Studio software(https://visualstudio.microsoft.com/); if you are using a Linux system, you can directly run sudo apt install gcc.
 
 ### 2.	Deploy the code
 First, you need to download the code from GitHub; simply download the code zip package.
@@ -35,13 +35,32 @@ conda install pytorch==1.11.0 torchvision==0.12.0 torchaudio==0.11.0 cpuonly -c 
 ```
 
 We use the pypls library for PLS-DA and OPLS-DA analyses, so we need to follow the pypls library with reference to https://github.com/Omicometrics/pypls/tree/master.
-In addition to the above steps, you need to apply for an Alibaba Cloud (Aliyun) Large Model API key to access the large model services. Specifically, follow these steps:
-1.	Visit the Aliyun Large Model homepage(https://bailian.console.aliyun.com/#/home) to register and log in.
-2.	After successful registration, you will receive 10 million free tokens.
-3.	Open the app.py file and locate Line 104.
-4.	Replace the placeholder with your newly obtained API key.
-Finally, enter python app.py in the command line to run the platform code.
+Specifically, you first need to click the above link to download the pypls library code. After downloading, extract the compressed file. Then, navigate to the code directory, open the command line, and run the command</br>
+```
+python -m setup install
+```
 
+In addition to the above steps, you need to apply for openai API key to access the large model services. Specifically, follow these steps:
+1.	Visit the openai homepage(https://platform.openai.com/docs/overview) to register and log in. Then create api key(https://platform.openai.com/api-keys).
+2.	Open the app.py file and locate Line 110.
+3.	Replace the placeholder with your newly obtained API key.
+Finally, enter python app.py in the command line to run the platform code.</br>
+
+Possible issues during the deployment process：
+In FlaskUpload,
+if you encounter the error cannot import secure_filename, change
+```
+from werkzeug
+```
+to 
+```
+from werkzeug.utils
+```
+If the error cannot import name 'FileStorage' appears after the change, split the import into two lines:
+```
+from werkzeug.utils import secure_filename  
+from werkzeug.datastructures import FileStorage
+```
 
 <!-- USAGE EXAMPLES -->
 ## Usage
