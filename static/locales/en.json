@@ -103,7 +103,7 @@
     "generate_chinese_instruction": "Generate Chinese Instruction",
     "generate_english_instruction": "Generate English Instruction",
     "deepseek": "DeepSeek",
-    "qianwen": "Qwen"
+    "qianwen": "Chatgpt"
   },
   "titles": {
     "identification": "Identification Results",
